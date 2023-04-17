@@ -5,6 +5,7 @@
 //=================================================================
 typedef int (*FriendshipFunction)(void*,void*);
 typedef int (*ComparisonFunction)(void*,void*);
+typedef enum { ISRAELIQUEUE_SUCCESS, ISRAELIQUEUE_ALLOC_FAILED, ISRAELIQUEUE_BAD_PARAM } IsraeliQueueError;
 
 typedef struct IsraeliNode_t{
 	void *item;
@@ -30,19 +31,25 @@ typedef struct IsraeliQueue_t{
 //=================================================================
 /*create function:*/
 //=================================================================
-/*TODO: figure out how to implement the friendshipfunctions list (probably linked list)
+/*TODO: figure out how to implement the friendship functions list (probably linked list), and when to check the parameter
  * */
 
-IsraeliQueue IsraeliQueueCreate(FriendshipFunction * friendshipFunction, ComparisonFunction comparisonFunction,
+IsraeliQueue IsraeliQueueCreate(FriendshipFunction * friendshipFunctionList, ComparisonFunction comparisonFunction,
 								int friendship_th, int rivalry_th){
 	//TODO: add checks for the parameters
+
+	//check functionslist; the list pointer and every func pointer in it.
+
+	if(!comparisonFunction){
+		//TODO: handle parameter error
+	}
 
 	/*take care of the f function list here*/
 
 	IsraeliQueue returnQueue = malloc(sizeof(returnQueue)); //'destroy' function should free this memory
 
 	if(!returnQueue){
-		/*TODO: handle memory allocation error*/
+		/*TODO: handle memory allocation error */
 	}
 
 
