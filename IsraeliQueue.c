@@ -16,7 +16,7 @@ typedef struct IsraeliNode_t{
 /*head: pointer to the last obj in line. each obj points to the one in front of it.*/
 typedef struct IsraeliQueue_t{
 	IsraeliNode head;
-	FriendshipFunction *friendshipFunctionList;
+	FriendshipFunction *friendshipFunctionList; //we might need to change this one to a linked list
 	ComparisonFunction comparisonFunction;
 	int friendship_th;
 	int rivalry_th;
@@ -31,11 +31,20 @@ typedef struct IsraeliQueue_t{
 /*create function:*/
 //=================================================================
 /*TODO: figure out how to implement the friendshipfunctions list (probably linked list)
- *
  * */
 
 IsraeliQueue IsraeliQueueCreate(FriendshipFunction * friendshipFunction, ComparisonFunction comparisonFunction,
 								int friendship_th, int rivalry_th){
+	//TODO: add checks for the parameters
+
+	/*take care of the f function list here*/
+
+	IsraeliQueue returnQueue = malloc(sizeof(returnQueue)); //'destroy' function should free this memory
+
+	if(!returnQueue){
+		/*TODO: handle memory allocation error*/
+	}
+
 
 
 }
