@@ -1,6 +1,8 @@
 //
 // Created by Zohar Shtamberg on 17/04/2023.
-//
+//=================================================================
+/*type defs:*/
+//=================================================================
 typedef int (*FriendshipFunction)(void*,void*);
 typedef int (*ComparisonFunction)(void*,void*);
 
@@ -20,4 +22,20 @@ typedef struct IsraeliQueue_t{
 	int rivalry_th;
 } *IsraeliQueue;
 
+//=================================================================
+/*internal functions:*/
+//=================================================================
 
+
+//=================================================================
+/*create function:*/
+//=================================================================
+/*TODO: figure out how to implement the friendshipfunctions list (probably linked list)
+ *
+ * */
+
+IsraeliQueue IsraeliQueueCreate(FriendshipFunction * friendshipFunction, ComparisonFunction comparisonFunction,
+								int friendship_th, int rivalry_th){
+
+
+}
