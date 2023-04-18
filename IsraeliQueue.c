@@ -54,6 +54,7 @@ FriendshipFunction* duplicateFuncArray(FriendshipFunction *friendshipFunctionLis
 	for(int i=0;i<length;i++){
 		NewFunctionsArray[i]=friendshipFunctionList_In[i];
 	}	
+	NewFunctionsArray[length]=NULL;
 	return NewFunctionsArray;
 
 }
