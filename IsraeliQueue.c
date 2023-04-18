@@ -10,7 +10,8 @@
 //=================================================================
 typedef int (*FriendshipFunction)(void*,void*);
 typedef int (*ComparisonFunction)(void*,void*);
-typedef enum { ISRAELIQUEUE_SUCCESS, ISRAELIQUEUE_ALLOC_FAILED, ISRAELIQUEUE_BAD_PARAM } IsraeliQueueError;
+typedef enum { ISRAELIQUEUE_SUCCESS, ISRAELIQUEUE_ALLOC_FAILED,
+			   ISRAELIQUEUE_BAD_PARAM, ISRAELI_QUEUE_ERROR } IsraeliQueueError;
 
 typedef struct IsraeliNode_t{
 	void *item;
@@ -31,7 +32,16 @@ typedef struct IsraeliQueue_t{
 //=================================================================
 /*internal functions:*/
 //=================================================================
+/**
+ *
+ * @param friendshipFunctionList_In: ptr to array of friendship-functions to duplicate
+ * @return :ptr to a fresh copy of the array
+ * note: the last item in the copy should also be a NULL ptr.
+ * memory allocated for the copy will be freed in 'destroy' function.
+ */
+FriendshipFunction* duplicateFuncArray(FrienshipFunction *friendshipFunctionList_In){
 
+}
 
 //=================================================================
 /*create function:*/
@@ -43,9 +53,12 @@ typedef struct IsraeliQueue_t{
  * @param: friendship_th: friendship threshold.
  * @param: rivalry_th: rivalry threshold.
  * */
-IsraeliQueue IsraeliQueueCreate(FriendshipFunction * friendshipFunctionListIn, ComparisonFunction comparisonFunction,
+IsraeliQueue IsraeliQueueCreate(FriendshipFunction * friendshipFunctionList_In, ComparisonFunction comparisonFunction,
 								int friendship_th, int rivalry_th){
-	//here we need to duplicate the function list so that we can realloc it.
+
+	//here we need to duplicate the function list to memory we allocated, so that we can realloc it.
+	FriendshipFunction *friendshipFunctionList = duplicatFuncArray(friendshipFunctionList_In);
+
 	if(!comparisonFunction){
 		return NULL; //bad parameter
 	}
@@ -53,7 +66,7 @@ IsraeliQueue IsraeliQueueCreate(FriendshipFunction * friendshipFunctionListIn, C
 	IsraeliQueue returnQueue = malloc(sizeof(returnQueue)); //'destroy' function should free this memory
 
 	if(!returnQueue){
-		return NULL;
+		return NULL; //malloc failed
 	}
 
 
