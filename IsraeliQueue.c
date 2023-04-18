@@ -21,8 +21,8 @@ typedef struct IsraeliNode_t{
 
 /*head: pointer to the last obj in line. each obj points to the one in front of it.*/
 typedef struct IsraeliQueue_t{
-	IsraeliNode head;
-	FriendshipFunction *friendshipFunctionList; //we might need to change this one to a linked list
+	const IsraeliNode head;
+	FriendshipFunction *friendshipFunctionList; //will hold our copy of the func array
 	ComparisonFunction comparisonFunction;
 	int friendship_th;
 	int rivalry_th;
@@ -36,20 +36,19 @@ typedef struct IsraeliQueue_t{
 //=================================================================
 /*create function:*/
 //=================================================================
-/*TODO: figure out how to implement the friendship functions list (probably linked list), and when to check the parameter
+
+/**@param: friendshipFunctionListIn: a pointer to an array of friendship function pointers.
+ * 									 the array should end with a NULL ptr.
+ * @param: comparisonFunction: a ptr to comparison function.
+ * @param: friendship_th: friendship threshold.
+ * @param: rivalry_th: rivalry threshold.
  * */
-
-IsraeliQueue IsraeliQueueCreate(FriendshipFunction * friendshipFunctionList, ComparisonFunction comparisonFunction,
+IsraeliQueue IsraeliQueueCreate(FriendshipFunction * friendshipFunctionListIn, ComparisonFunction comparisonFunction,
 								int friendship_th, int rivalry_th){
-	//TODO: add checks for the parameters
-
-	//check functionslist; the list pointer and every func pointer in it.
-
+	//here we need to duplicate the function list so that we can realloc it.
 	if(!comparisonFunction){
 		return NULL; //bad parameter
 	}
-
-	/*take care of the f function list here*/
 
 	IsraeliQueue returnQueue = malloc(sizeof(returnQueue)); //'destroy' function should free this memory
 
