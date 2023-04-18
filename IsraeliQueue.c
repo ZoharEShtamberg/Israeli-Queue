@@ -39,7 +39,22 @@ typedef struct IsraeliQueue_t{
  * note: the last item in the copy should also be a NULL ptr.
  * memory allocated for the copy will be freed in 'destroy' function.
  */
-FriendshipFunction* duplicateFuncArray(FrienshipFunction *friendshipFunctionList_In){
+FriendshipFunction* duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In){
+
+	if (!friendshipFunctionList_In){
+		return NULL; // invalid pointer
+	}
+
+	int length=sizeof(sizeof(friendshipFunctionList_In)/(sizeof(FriendshipFunction*)));
+	FriendshipFunction *NewFunctionsArray=malloc(sizeof(FriendshipFunction)*(length+1));
+
+	if (NewFunctionsArray==NULL){
+		return NULL; // memory allocation failed
+	}
+	for(int i=0;i<length;i++){
+		NewFunctionsArray[i]=friendshipFunctionList_In[i];
+	}	
+	return NewFunctionsArray;
 
 }
 
