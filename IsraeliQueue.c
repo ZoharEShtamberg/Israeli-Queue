@@ -1,5 +1,10 @@
 //
 // Created by Zohar Shtamberg on 17/04/2023.
+//
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
+
 //=================================================================
 /*type defs:*/
 //=================================================================
@@ -41,7 +46,7 @@ IsraeliQueue IsraeliQueueCreate(FriendshipFunction * friendshipFunctionList, Com
 	//check functionslist; the list pointer and every func pointer in it.
 
 	if(!comparisonFunction){
-		//TODO: handle parameter error
+		return NULL; //bad parameter
 	}
 
 	/*take care of the f function list here*/
@@ -49,7 +54,7 @@ IsraeliQueue IsraeliQueueCreate(FriendshipFunction * friendshipFunctionList, Com
 	IsraeliQueue returnQueue = malloc(sizeof(returnQueue)); //'destroy' function should free this memory
 
 	if(!returnQueue){
-		/*TODO: handle memory allocation error */
+		return NULL;
 	}
 
 
