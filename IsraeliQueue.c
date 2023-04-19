@@ -72,6 +72,16 @@ static void destroyFunctionList(node functionList){
 	free(functionList);
 	return;
 }
+/**TODO:documentation
+ * */
+static bool areFriends(void* itemA, void* itemB, node friendshipFunction, int friendshipThreshold){
+	while(friendshipFunction->m_next){
+		if(friendshipThreshold < ((FriendshipFunction)(friendshipFunction->m_item))(itemA, itemB)){
+			return true;
+		}
+	}
+	return false;
+}
 
 //=================================================================
 /*create function:*/
