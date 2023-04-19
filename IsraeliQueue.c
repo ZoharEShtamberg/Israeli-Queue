@@ -4,60 +4,32 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include "IsraeliQueue.h"
 
 //=================================================================
-/*type defs:*/
+/*typedefs & struct decleration*/
 //=================================================================
-typedef int (*FriendshipFunction)(void*,void*);
-typedef int (*ComparisonFunction)(void*,void*);
-typedef enum { ISRAELIQUEUE_SUCCESS, ISRAELIQUEUE_ALLOC_FAILED,
-			   ISRAELIQUEUE_BAD_PARAM, ISRAELI_QUEUE_ERROR } IsraeliQueueError;
 
-typedef struct IsraeliNode_t{
+
+typedef struct Node_t{
 	void *item;
-	struct IsraeliNode_t *next;
-	int friendsBypassed;
-	int enemiesBlocked;
-} *IsraeliNode;
+	struct Node_t *next;
+} *Node;
 
-/*head: pointer to the last obj in line. each obj points to the one in front of it.*/
-typedef struct IsraeliQueue_t{
-	const IsraeliNode head;
-	FriendshipFunction *friendshipFunctionList; //will hold our copy of the func array
+/**head: pointer to the first obj in line. each obj points to the one behind it.
+ * */
+ struct IsraeliQueue_t{
+	Node head;
+	Node *friendshipFunctionList; //will hold our copy of the func array
 	ComparisonFunction comparisonFunction;
 	int friendship_th;
 	int rivalry_th;
-} *IsraeliQueue;
+}
 
 //=================================================================
 /*internal functions:*/
 //=================================================================
-/**
- *
- * @param friendshipFunctionList_In: ptr to array of friendship-functions to duplicate
- * @return :ptr to a fresh copy of the array
- * note: the last item in the copy should also be a NULL ptr.
- * memory allocated for the copy will be freed in 'destroy' function.
- */
-FriendshipFunction* duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In){
 
-	if (!friendshipFunctionList_In){
-		return NULL; // invalid pointer
-	}
-
-	int length=sizeof(sizeof(friendshipFunctionList_In)/(sizeof(FriendshipFunction*)));
-	FriendshipFunction *NewFunctionsArray=malloc(sizeof(FriendshipFunction)*(length+1));
-
-	if (NewFunctionsArray==NULL){
-		return NULL; // memory allocation failed
-	}
-	for(int i=0;i<length;i++){
-		NewFunctionsArray[i]=friendshipFunctionList_In[i];
-	}	
-	NewFunctionsArray[length]=NULL;
-	return NewFunctionsArray;
-
-}
 
 //=================================================================
 /*create function:*/
