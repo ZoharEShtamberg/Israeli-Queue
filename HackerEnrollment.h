@@ -4,12 +4,13 @@
 
 #include <stdio.h>
 #include <stdbool.h>
-#include <IsraeliQueue.h>// ?
+#include "IsraeliQueue.h"
 
 
-typedef struct EnrollmentSystem_t * EnrollmentSystem;
-typedef struct Student_t * Student;
-typedef struct Course_t * Course;
+typedef struct EnrollmentSystem_t *EnrollmentSystem;
+typedef struct Student_t *Student;
+typedef struct Hacker_t *Hacker;
+typedef struct Course_t *Course;
 
 typedef enum { HACKER_ENROLLMENT_SUCCESS, HACKER_ENROLLMENT_ALLOC_FAILED, HACKER_ENROLLMENT_BAD_PARAM, HACKER_ENROLLMENT_ERROR } HackerEnrollmentError;
 /**Error clarification:
@@ -24,6 +25,7 @@ typedef enum { HACKER_ENROLLMENT_SUCCESS, HACKER_ENROLLMENT_ALLOC_FAILED, HACKER
  * @param students: <Student ID> <Total Credits> <GPA> <Name> <Surname> <City> <Department>\n
  * @param courses: <Course Number> <size>\n
  * @param hackers: <Student ID>\n <Course Number>\n <Student ID>\n (friends) <Student ID>\n (rivals)
+ * 
  * 
  * returns a pointer
  * */
