@@ -7,7 +7,7 @@
 #include "IsraeliQueue.h"
 
 //=================================================================
-/*typedefs & struct decleration*/
+/*typedefs & struct declaration*/
 //=================================================================
 
 /**basic linked list node.
@@ -36,13 +36,17 @@ typedef struct IsraeliItem_t{
  }*IsraeliItem;
 
 //=================================================================
-/*function declerations*/
+/*function declarations*/
 //=================================================================
 static node duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In);
 static void destroyFunctionList(node functionList);
 //=================================================================
 /*internal functions:*/
 //=================================================================
+/**@param friendshipFunctionList_In: ptr to an array of FriendshipFunction ptrs.
+ * @return: ptr to a linked list of the function ptrs.
+ * note: memory should be freed when destroying the israeli queue
+ * */
 static node duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In){
 	node last=NULL, curr=NULL;
 
@@ -58,6 +62,8 @@ static node duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In){
 	}
 	return curr;
 }
+/**@param functionList:ptr to a linked list of functions.
+ * frees allocated memory recursively.*/
 static void destroyFunctionList(node functionList){
 	if(!functionList){
 		return;
