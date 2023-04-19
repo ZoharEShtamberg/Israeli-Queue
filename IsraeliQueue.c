@@ -10,26 +10,62 @@
 /*typedefs & struct decleration*/
 //=================================================================
 
+/**basic linked list node.
+ * */
+typedef struct node_t{
+	void *m_item;
+	struct Node_t *m_next;
+} *node;
 
-typedef struct Node_t{
-	void *item;
-	struct Node_t *next;
-} *Node;
-
-/**head: pointer to the first obj in line. each obj points to the one behind it.
+/**m_head: pointer to the first obj in line. each obj points to the one behind it.
+ * 		 a ptr to a linked list of israeli items.
+ * m_friendshipFunctionList: ptr to a linked list of ptrs to friendship functions.
  * */
  struct IsraeliQueue_t{
-	Node head;
-	Node *friendshipFunctionList; //will hold our copy of the func array
-	ComparisonFunction comparisonFunction;
-	int friendship_th;
-	int rivalry_th;
-}
+	node m_head;
+	node m_friendshipFunctionList;
+	ComparisonFunction m_comparisonFunction;
+	int m_friendship_th;
+	int m_rivalry_th;
+};// a ptr to an Israeli Queue is typedef-ed in header file as 'IsraeliQueue'
 
+typedef struct IsraeliItem_t{
+	 void* m_data;
+	 int m_friendsHelped;
+	 int m_enemiesBlocked;
+ }*IsraeliItem;
+
+//=================================================================
+/*function declerations*/
+//=================================================================
+static node duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In);
+static void destroyFunctionList(node functionList);
 //=================================================================
 /*internal functions:*/
 //=================================================================
+static node duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In){
+	node last=NULL, curr=NULL;
 
+	while(friendshipFunctionList_In++){
+		curr = malloc(sizeof(*curr));
+		if(!curr){
+			destroyFunctionList(last);
+			return NULL;
+		}
+		curr->m_next = last; //ironic...
+		curr->m_item = *friendshipFunctionList_In;
+		last=curr;
+	}
+	return curr;
+}
+static void destroyFunctionList(node functionList){
+	if(!functionList){
+		return;
+	}
+	destroyFunctionList(functionList->m_next);
+	free(functionList);
+	return;
+}
 
 //=================================================================
 /*create function:*/
@@ -40,18 +76,18 @@ typedef struct Node_t{
  * @param: comparisonFunction: a ptr to comparison function.
  * @param: friendship_th: friendship threshold.
  * @param: rivalry_th: rivalry threshold.
+ * @return: ptr to an Israeli queue.
  * */
-IsraeliQueue IsraeliQueueCreate(FriendshipFunction * friendshipFunctionList_In, ComparisonFunction comparisonFunction,
+IsraeliQueue IsraeliQueueCreate(FriendshipFunction *friendshipFunctionList_In, ComparisonFunction comparisonFunction,
 								int friendship_th, int rivalry_th){
 
-	//here we need to duplicate the function list to memory we allocated, so that we can realloc it.
-	FriendshipFunction *friendshipFunctionList = duplicatFuncArray(friendshipFunctionList_In);
-
-	if(!comparisonFunction){
+	if(!comparisonFunction||!friendshipFunctionList_In){
 		return NULL; //bad parameter
 	}
 
-	IsraeliQueue returnQueue = malloc(sizeof(returnQueue)); //'destroy' function should free this memory
+	node friendshipFunctionList = duplicateFuncArray(friendshipFunctionList_In);
+
+	IsraeliQueue returnQueue = malloc(sizeof(*returnQueue)); //'destroy' function should free this memory
 
 	if(!returnQueue){
 		return NULL; //malloc failed
