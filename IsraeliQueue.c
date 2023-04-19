@@ -25,8 +25,8 @@ typedef struct node_t{
 	node m_head;
 	node m_friendshipFunctionList;
 	ComparisonFunction m_comparisonFunction;
-	int m_friendship_th;
-	int m_rivalry_th;
+	int m_friendshipTreshold;
+	int m_rivalryTreshold;
 };// a ptr to an Israeli Queue is typedef-ed in header file as 'IsraeliQueue'
 
 typedef struct IsraeliItem_t{
@@ -98,7 +98,11 @@ IsraeliQueue IsraeliQueueCreate(FriendshipFunction *friendshipFunctionList_In, C
 	if(!returnQueue){
 		return NULL; //malloc failed
 	}
+	returnQueue->m_comparisonFunction = comparisonFunction;
+	returnQueue->m_friendshipFunctionList = friendshipFunctionList;
+	returnQueue->m_head = NULL;
+	returnQueue->m_friendshipTreshold = friendship_th;
+	returnQueue->m_rivalryTreshold = rivalry_th;
 
-
-
+	return returnQueue;
 }
