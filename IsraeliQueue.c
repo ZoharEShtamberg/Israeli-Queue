@@ -148,3 +148,28 @@ IsraeliQueue IsraeliQueueCreate(FriendshipFunction *friendshipFunctionList_In, C
 
 	return returnQueue;
 }
+//=================================================================
+/*enqueue function:*/
+//=================================================================
+IsraeliQueueError IsraeliQueueEnqueue(IsraeliQueue queue, void *item){
+	node curr = queue->m_head, friend=NULL;
+	while(curr->m_next){
+		if(areFriends(curr->m_item, item, queue)){
+			friend = curr;//found a friend
+			while(curr){
+				if(areEnemies(curr->m_item, item, queue) &&
+					((IsraeliItem)curr->m_item)->m_enemiesBlocked< RIVAL_QUOTA){
+					((IsraeliItem)curr->m_item)->m_enemiesBlocked++;
+					friend=NULL;
+					break;
+				}
+				curr = curr->m_next;
+			}
+		}
+		curr = curr->m_next;
+	}
+	if(friend){//not NULL, means a friend found and no enemy blocked the jesta
+		return insertBehind(item, friend, queue);
+	}
+	return insertBehind(item, curr, queue);
+}
