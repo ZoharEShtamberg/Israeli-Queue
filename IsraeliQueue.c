@@ -72,7 +72,11 @@ static void destroyFunctionList(node functionList){
 	free(functionList);
 	return;
 }
-/**TODO:documentation
+/**@param ItemA: ptr to first item (IsraeliItem->m_data)
+ * @param ItemB: ptr to second Item
+ * @param friendshipFunction: a head of a linked list, containing FriendshipFunction ptrs.
+ * @param friendshipThreshold: usually from IsraeliQueue->m_friendshipThreshold
+ * @return: true if they are friends, false otherwise.
  * */
 static bool areFriends(void* itemA, void* itemB, node friendshipFunction, int friendshipThreshold){
 	while(friendshipFunction->m_next){
