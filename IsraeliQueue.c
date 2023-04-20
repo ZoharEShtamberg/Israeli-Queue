@@ -2,6 +2,7 @@
 // Created by Zohar Shtamberg on 17/04/2023.
 //
 #include <stdlib.h>
+#include <math.h>
 #include <stdio.h>
 #include <assert.h>
 #include "IsraeliQueue.h"
@@ -25,8 +26,8 @@ typedef struct node_t{
 	node m_head;
 	node m_friendshipFunctionList;
 	ComparisonFunction m_comparisonFunction;
-	int m_friendshipTreshold;
-	int m_rivalryTreshold;
+	int m_friendshipThreshold;
+	int m_rivalryThreshold;
 };// a ptr to an Israeli Queue is typedef-ed in header file as 'IsraeliQueue'
 
 typedef struct IsraeliItem_t{
@@ -74,15 +75,31 @@ static void destroyFunctionList(node functionList){
 }
 /**@param ItemA: ptr to first item (IsraeliItem->m_data)
  * @param ItemB: ptr to second Item
- * @param friendshipFunction: a head of a linked list, containing FriendshipFunction ptrs.
+ * @param friendshipFunctions: a head of a linked list, containing FriendshipFunction ptrs.
  * @param friendshipThreshold: usually from IsraeliQueue->m_friendshipThreshold
  * @return: true if they are friends, false otherwise.
  * */
-static bool areFriends(void* itemA, void* itemB, node friendshipFunction, int friendshipThreshold){
-	while(friendshipFunction->m_next){
-		if(friendshipThreshold < ((FriendshipFunction)(friendshipFunction->m_item))(itemA, itemB)){
+static bool areFriends(void* itemA, void* itemB, node friendshipFunctions, int friendshipThreshold){
+	while(friendshipFunctions->m_next){
+		if(friendshipThreshold < ( ((FriendshipFunction)(friendshipFunctions->m_item) )(itemA, itemB))){
 			return true;
 		}
+	}
+	return false;
+}
+static bool areEnemies(void* itemA, void* itemB, node friendshipFunctions, int friendshipThreshold, int rivalryThreshold){
+	int sum = 0, counter=0,curr;
+	while(friendshipFunctions->m_next){
+		curr = ( (FriendshipFunction)(friendshipFunctions->m_item) )(itemA, itemB);
+		if(curr>friendshipThreshold){
+			return false;
+		}
+		sum +=curr;
+		counter++;
+	}
+	double average = sum/counter;
+	if(ceil(average)<rivalryThreshold){//need to check if 'ceil()' is allowed
+		return true;
 	}
 	return false;
 }
@@ -115,8 +132,8 @@ IsraeliQueue IsraeliQueueCreate(FriendshipFunction *friendshipFunctionList_In, C
 	returnQueue->m_comparisonFunction = comparisonFunction;
 	returnQueue->m_friendshipFunctionList = friendshipFunctionList;
 	returnQueue->m_head = NULL;
-	returnQueue->m_friendshipTreshold = friendship_th;
-	returnQueue->m_rivalryTreshold = rivalry_th;
+	returnQueue->m_friendshipThreshold = friendship_th;
+	returnQueue->m_rivalryThreshold = rivalry_th;
 
 	return returnQueue;
 }
