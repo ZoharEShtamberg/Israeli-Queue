@@ -77,8 +77,7 @@ static void destroyFunctionList(node functionList){
 }
 /**@param ItemA: ptr to first item (IsraeliItem->m_data)
  * @param ItemB: ptr to second Item
- * @param friendshipFunctions: a head of a linked list, containing FriendshipFunction ptrs.
- * @param friendshipThreshold: usually from IsraeliQueue->m_friendshipThreshold
+ * @param IsraeliQueue: the Israeli Queue containing the items.
  * @return: true if they are friends, false otherwise.
  * */
 static bool areFriends(void* itemA, void* itemB,IsraeliQueue queue){
@@ -91,6 +90,11 @@ static bool areFriends(void* itemA, void* itemB,IsraeliQueue queue){
 	}
 	return false;
 }
+/**@param ItemA: ptr to first item (IsraeliItem->m_data)
+ * @param ItemB: ptr to second Item
+ * @param IsraeliQueue: the Israeli Queue containing the items.
+ * @return: true if they are enemies, false otherwise.
+ * */
 static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue){
 	int sum = 0, counter=0,curr;
 	double average;
