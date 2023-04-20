@@ -15,7 +15,7 @@
  * */
 typedef struct node_t{
 	void *m_item;
-	struct Node_t *m_next;
+	struct node_t *m_next;
 } *node;
 
 /**m_head: pointer to the first obj in line. each obj points to the one behind it.
@@ -41,6 +41,9 @@ typedef struct IsraeliItem_t{
 //=================================================================
 static node duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In);
 static void destroyFunctionList(node functionList);
+static bool areFriends(void* itemA, void* itemB,IsraeliQueue queue);
+static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue);
+
 //=================================================================
 /*internal functions:*/
 //=================================================================
@@ -71,7 +74,6 @@ static void destroyFunctionList(node functionList){
 	}
 	destroyFunctionList(functionList->m_next);
 	free(functionList);
-	return;
 }
 /**@param ItemA: ptr to first item (IsraeliItem->m_data)
  * @param ItemB: ptr to second Item
@@ -79,29 +81,34 @@ static void destroyFunctionList(node functionList){
  * @param friendshipThreshold: usually from IsraeliQueue->m_friendshipThreshold
  * @return: true if they are friends, false otherwise.
  * */
-static bool areFriends(void* itemA, void* itemB, node friendshipFunctions, int friendshipThreshold){
-	while(friendshipFunctions->m_next){
-		if(friendshipThreshold < ( ((FriendshipFunction)(friendshipFunctions->m_item) )(itemA, itemB))){
+static bool areFriends(void* itemA, void* itemB,IsraeliQueue queue){
+	node list = queue->m_friendshipFunctionList;
+	while(list){
+		if(queue->m_friendshipThreshold < ( ((FriendshipFunction)list->m_item) )(itemA, itemB)){
 			return true;
 		}
+		list = list->m_next;
 	}
 	return false;
 }
-static bool areEnemies(void* itemA, void* itemB, node friendshipFunctions, int friendshipThreshold, int rivalryThreshold){
+static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue){
 	int sum = 0, counter=0,curr;
-	while(friendshipFunctions->m_next){
-		curr = ( (FriendshipFunction)(friendshipFunctions->m_item) )(itemA, itemB);
-		if(curr>friendshipThreshold){
+	double average;
+	node list = queue->m_friendshipFunctionList;
+	while(list){
+		curr = ((FriendshipFunction)list->m_item)(itemA, itemB);
+		if(curr > queue->m_friendshipThreshold){
 			return false;
 		}
 		sum +=curr;
 		counter++;
+		list = list->m_next;
+		average = ((double)sum/counter);//inside the loop to avoid dividing by 0
 	}
-	double average = sum/counter;
-	if(ceil(average)<rivalryThreshold){//need to check if 'ceil()' is allowed
-		return true;
+	if(ceil(average) >= queue->m_rivalryThreshold){//need to check if 'ceil()' is allowed
+		return false;
 	}
-	return false;
+	return true;
 }
 
 //=================================================================
