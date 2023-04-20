@@ -143,6 +143,15 @@ static Node findFriend(IsraeliQueue queue, void* item){
 	}
 	return curr;
 }
+/**@param: behind: node to insert to list
+ * @param front: node to insert behind
+ * @note: ...-> front -> behind ->...
+ * */
+static void insertBehind(Node behind, Node front){
+	Node temp = front->m_next;
+	front->m_next = behind;
+	behind->m_next = temp;
+}
 
 //=================================================================
 /*create function:*/
