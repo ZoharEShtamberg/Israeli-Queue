@@ -11,20 +11,20 @@
 /*typedefs & struct declaration*/
 //=================================================================
 
-/**basic linked list node.
+/**basic linked list Node.
  * */
 typedef struct node_t{
 	void *m_item;
 	struct node_t *m_next;
-} *node;
+} *Node;
 
 /**m_head: pointer to the first obj in line. each obj points to the one behind it.
  * 		 a ptr to a linked list of israeli items.
  * m_friendshipFunctionList: ptr to a linked list of ptrs to friendship functions.
  * */
  struct IsraeliQueue_t{
-	node m_head;
-	node m_friendshipFunctionList;
+	Node m_head;
+	Node m_friendshipFunctionList;
 	ComparisonFunction m_comparisonFunction;
 	int m_friendshipThreshold;
 	int m_rivalryThreshold;
@@ -39,8 +39,8 @@ typedef struct IsraeliItem_t{
 //=================================================================
 /*function declarations*/
 //=================================================================
-static node duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In);
-static void destroyFunctionList(node functionList);
+static Node duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In);
+static void destroyFunctionList(Node functionList);
 static bool areFriends(void* itemA, void* itemB,IsraeliQueue queue);
 static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue);
 
@@ -51,8 +51,8 @@ static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue);
  * @return: ptr to a linked list of the function ptrs.
  * note: memory should be freed when destroying the israeli queue
  * */
-static node duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In){
-	node last=NULL, curr=NULL;
+static Node duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In){
+	Node last=NULL, curr=NULL;
 
 	while(friendshipFunctionList_In++){
 		curr = malloc(sizeof(*curr));
@@ -68,7 +68,7 @@ static node duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In){
 }
 /**@param functionList:ptr to a linked list of functions.
  * frees allocated memory recursively.*/
-static void destroyFunctionList(node functionList){
+static void destroyFunctionList(Node functionList){
 	if(!functionList){
 		return;
 	}
@@ -81,7 +81,7 @@ static void destroyFunctionList(node functionList){
  * @return: true if they are friends, false otherwise.
  * */
 static bool areFriends(void* itemA, void* itemB,IsraeliQueue queue){
-	node list = queue->m_friendshipFunctionList;
+	Node list = queue->m_friendshipFunctionList;
 	while(list){
 		if(queue->m_friendshipThreshold < ( ((FriendshipFunction)list->m_item) )(itemA, itemB)){
 			return true;
@@ -98,7 +98,7 @@ static bool areFriends(void* itemA, void* itemB,IsraeliQueue queue){
 static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue){
 	int sum = 0, counter=0,curr;
 	double average;
-	node list = queue->m_friendshipFunctionList;
+	Node list = queue->m_friendshipFunctionList;
 	while(list){
 		curr = ((FriendshipFunction)list->m_item)(itemA, itemB);
 		if(curr > queue->m_friendshipThreshold){
@@ -113,6 +113,44 @@ static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue){
 		return false;
 	}
 	return true;
+}
+/**@param queue: an Israeli queue.
+ * @param item: item to find its place in queue.
+ * @return Node ptr to insert behind.
+ * @note: increments stats for friend helped\enemy blocked.
+ * */
+static Node findFriend(IsraeliQueue queue, void* item){
+	Node curr = queue->m_head, friend=NULL;
+	while(curr->m_next){
+		if(areFriends(((IsraeliItem)curr->m_item)->m_data, item, queue)){
+			friend = curr;//found a friend
+			while(curr){
+				if(areEnemies(((IsraeliItem)curr->m_item)->m_data, item, queue) &&
+				   ((IsraeliItem)curr->m_item)->m_enemiesBlocked< RIVAL_QUOTA){
+					((IsraeliItem)curr->m_item)->m_enemiesBlocked++;
+					friend=NULL;
+					break;
+				}
+				curr = curr->m_next;
+			}
+		}
+		curr = curr->m_next;
+	}
+	if(friend &&(IsraeliItem)friend->m_next && ((IsraeliItem)friend->m_item)->m_friendsHelped < FRIEND_QUOTA){
+		//if the friend is already the last one, if is not entered, and it doesn't count as a 'jesta'
+		((IsraeliItem)friend->m_item)->m_friendsHelped++;
+		return friend;
+	}
+	return curr;
+}
+/**@param: behind: node to insert to list
+ * @param front: node to insert behind
+ * @note: ...-> front -> behind ->...
+ * */
+static void insertBehind(Node behind, Node front){
+	Node temp = front->m_next;
+	front->m_next = behind;
+	behind->m_next = temp;
 }
 
 //=================================================================
@@ -133,7 +171,7 @@ IsraeliQueue IsraeliQueueCreate(FriendshipFunction *friendshipFunctionList_In, C
 		return NULL; //bad parameter
 	}
 
-	node friendshipFunctionList = duplicateFuncArray(friendshipFunctionList_In);
+	Node friendshipFunctionList = duplicateFuncArray(friendshipFunctionList_In);
 
 	IsraeliQueue returnQueue = malloc(sizeof(*returnQueue)); //'destroy' function should free this memory
 
@@ -147,4 +185,25 @@ IsraeliQueue IsraeliQueueCreate(FriendshipFunction *friendshipFunctionList_In, C
 	returnQueue->m_rivalryThreshold = rivalry_th;
 
 	return returnQueue;
+}
+//=================================================================
+/*enqueue function:*/
+//=================================================================
+IsraeliQueueError IsraeliQueueEnqueue(IsraeliQueue queue, void *data){
+	Node friend = findFriend(queue, data);// takes care of thresholds!
+	IsraeliItem newItem = malloc(sizeof(*newItem));
+	if(!newItem){
+		return ISRAELIQUEUE_ALLOC_FAILED;
+	}
+	Node newNode = malloc(sizeof(*newNode));
+	if(!newNode){
+		free(newItem);
+		return ISRAELIQUEUE_ALLOC_FAILED;
+	}
+	newItem->m_friendsHelped = newItem->m_enemiesBlocked = 0;
+	newItem->m_data = data;
+	newNode->m_item = newItem;
+	newNode->m_next=NULL;
+	insertBehind(newNode, friend);
+	return ISRAELIQUEUE_SUCCESS;
 }
