@@ -117,6 +117,7 @@ static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue){
 /**@param queue: an Israeli queue.
  * @param item: item to find its place in queue.
  * @return Node ptr to insert behind.
+ * @note: increments stats for friend helped\enemy blocked.
  * */
 static Node findFriend(IsraeliQueue queue, void* item){
 	Node curr = queue->m_head, friend=NULL;
@@ -135,7 +136,8 @@ static Node findFriend(IsraeliQueue queue, void* item){
 		}
 		curr = curr->m_next;
 	}
-	if(friend && ((IsraeliItem)friend->m_item)->m_friendsHelped < FRIEND_QUOTA){
+	if(friend &&(IsraeliItem)friend->m_next && ((IsraeliItem)friend->m_item)->m_friendsHelped < FRIEND_QUOTA){
+		//if the friend is already the last one, if is not entered, and it doesn't count as a 'jesta'
 		((IsraeliItem)friend->m_item)->m_friendsHelped++;
 		return friend;
 	}
@@ -178,6 +180,21 @@ IsraeliQueue IsraeliQueueCreate(FriendshipFunction *friendshipFunctionList_In, C
 //=================================================================
 /*enqueue function:*/
 //=================================================================
-IsraeliQueueError IsraeliQueueEnqueue(IsraeliQueue queue, void *item){
-
+IsraeliQueueError IsraeliQueueEnqueue(IsraeliQueue queue, void *data){
+	Node friend = findFriend(queue, data);// takes care of thresholds!
+	IsraeliItem newItem = malloc(sizeof(*newItem));
+	if(!newItem){
+		return ISRAELIQUEUE_ALLOC_FAILED;
+	}
+	Node newNode = malloc(sizeof(*newNode));
+	if(!newNode){
+		free(newItem);
+		return ISRAELIQUEUE_ALLOC_FAILED;
+	}
+	newItem->m_friendsHelped = newItem->m_enemiesBlocked = 0;
+	newItem->m_data = data;
+	newNode->m_item = newItem;
+	newNode->m_next=NULL;
+	insertBehind(newNode, friend);
+	return ISRAELIQUEUE_SUCCESS;
 }
