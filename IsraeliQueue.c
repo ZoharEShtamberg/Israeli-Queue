@@ -115,6 +115,30 @@ static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue){
 	return true;
 }
 
+static node findFriend(IsraeliQueue queue, void* item){
+	node curr = queue->m_head, friend=NULL;
+	while(curr->m_next){
+		if(areFriends(((IsraeliItem)curr->m_item)->m_data, item, queue)){
+			friend = curr;//found a friend
+			while(curr){
+				if(areEnemies(((IsraeliItem)curr->m_item)->m_data, item, queue) &&
+				   ((IsraeliItem)curr->m_item)->m_enemiesBlocked< RIVAL_QUOTA){
+					((IsraeliItem)curr->m_item)->m_enemiesBlocked++;
+					friend=NULL;
+					break;
+				}
+				curr = curr->m_next;
+			}
+		}
+		curr = curr->m_next;
+	}
+	if(friend && ((IsraeliItem)friend->m_item)->m_friendsHelped < FRIEND_QUOTA){
+		((IsraeliItem)friend->m_item)->m_friendsHelped++;
+		return friend;
+	}
+	return curr;
+}
+
 //=================================================================
 /*create function:*/
 //=================================================================
@@ -152,24 +176,5 @@ IsraeliQueue IsraeliQueueCreate(FriendshipFunction *friendshipFunctionList_In, C
 /*enqueue function:*/
 //=================================================================
 IsraeliQueueError IsraeliQueueEnqueue(IsraeliQueue queue, void *item){
-	node curr = queue->m_head, friend=NULL;
-	while(curr->m_next){
-		if(areFriends(curr->m_item, item, queue)){
-			friend = curr;//found a friend
-			while(curr){
-				if(areEnemies(curr->m_item, item, queue) &&
-					((IsraeliItem)curr->m_item)->m_enemiesBlocked< RIVAL_QUOTA){
-					((IsraeliItem)curr->m_item)->m_enemiesBlocked++;
-					friend=NULL;
-					break;
-				}
-				curr = curr->m_next;
-			}
-		}
-		curr = curr->m_next;
-	}
-	if(friend){//not NULL, means a friend found and no enemy blocked the jesta
-		return insertBehind(item, friend, queue);
-	}
-	return insertBehind(item, curr, queue);
+
 }
