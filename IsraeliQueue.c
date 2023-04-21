@@ -40,10 +40,11 @@ typedef struct IsraeliItem_t{
 /*function declarations*/
 //=================================================================
 static Node duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In);
-static void destroyFunctionList(Node functionList);
+static void destroyLinkedList(Node list);
 static bool areFriends(void* itemA, void* itemB,IsraeliQueue queue);
 static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue);
-
+static Node findFriend(IsraeliQueue queue, void* item);
+static void insertBehind(Node behind, Node front);
 //=================================================================
 /*internal functions:*/
 //=================================================================
@@ -57,7 +58,7 @@ static Node duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In){
 	while(friendshipFunctionList_In++){
 		curr = malloc(sizeof(*curr));
 		if(!curr){
-			destroyFunctionList(last);
+			destroyLinkedList(last);
 			return NULL;
 		}
 		curr->m_next = last; //ironic...
@@ -66,14 +67,14 @@ static Node duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In){
 	}
 	return curr;
 }
-/**@param functionList:ptr to a linked list of functions.
+/**@param list:ptr to a linked list.
  * frees allocated memory recursively.*/
-static void destroyFunctionList(Node functionList){
-	if(!functionList){
+static void destroyLinkedList(Node list){
+	if(!list){
 		return;
 	}
-	destroyFunctionList(functionList->m_next);
-	free(functionList);
+	destroyLinkedList(list->m_next);
+	free(list);
 }
 /**@param ItemA: ptr to first item (IsraeliItem->m_data)
  * @param ItemB: ptr to second Item
@@ -206,4 +207,17 @@ IsraeliQueueError IsraeliQueueEnqueue(IsraeliQueue queue, void *data){
 	newNode->m_next=NULL;
 	insertBehind(newNode, friend);
 	return ISRAELIQUEUE_SUCCESS;
+}
+//=================================================================
+/*destroy function:*/
+//=================================================================
+void IsraeliQueueDestroy(IsraeliQueue queue){
+	destroyLinkedList(queue->m_friendshipFunctionList);	//destroy function list
+	Node copy = queue->m_head;
+	while(copy){	//destroy 'israeli items' in the linked list
+		free(copy->m_item);
+		copy=copy->m_next;
+	}
+	destroyLinkedList(queue->m_head);	// destroy queue nodes
+	free(queue);		//destroy queue struct
 }
