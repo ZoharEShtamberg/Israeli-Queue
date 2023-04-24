@@ -7,16 +7,15 @@
 #include <assert.h>
 #include "IsraeliQueue.h"
 
+
 //=================================================================
 /*typedefs & struct declaration*/
 //=================================================================
 
-/**basic linked list Node.
- * */
-typedef struct node_t{
+typedef struct Node_t{
 	void *m_item;
 	struct node_t *m_next;
-} *Node;
+}*Node;
 
 /**m_head: pointer to the first obj in line. each obj points to the one behind it.
  * 		 a ptr to a linked list of israeli items.
@@ -67,15 +66,7 @@ static Node duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In){
 	}
 	return curr;
 }
-/**@param list:ptr to a linked list.
- * frees allocated memory recursively.*/
-static void destroyLinkedList(Node list){
-	if(!list){
-		return;
-	}
-	destroyLinkedList(list->m_next);
-	free(list);
-}
+
 /**@param ItemA: ptr to first item (IsraeliItem->m_data)
  * @param ItemB: ptr to second Item
  * @param IsraeliQueue: the Israeli Queue containing the items.
@@ -148,10 +139,20 @@ static Node findFriend(IsraeliQueue queue, void* item){
  * @param front: node to insert behind
  * @note: ...-> front -> behind ->...
  * */
-static void insertBehind(Node behind, Node front){
+void insertBehind(Node behind, Node front){
 	Node temp = front->m_next;
 	front->m_next = behind;
 	behind->m_next = temp;
+}
+
+/**@param list:ptr to a linked list.
+ * frees allocated memory recursively.*/
+void destroyLinkedList(Node list){
+	if(!list){
+		return;
+	}
+	destroyLinkedList(list->m_next);
+	free(list);
 }
 
 //=================================================================
