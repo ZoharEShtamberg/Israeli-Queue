@@ -43,4 +43,20 @@ EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues);
  * */
 void hackEnrollment(EnrollmentSystem sys, FILE* out);
 
+
+
+
+/**
+ * switches to lower case
+ */
+
+void ignoreUpper(EnrollmentSystem sys);
+
+
+
+/**
+ * destroyEnrollment
+ */
+ void destroyEnrollment(EnrollmentSystem sys);
+
 #endif

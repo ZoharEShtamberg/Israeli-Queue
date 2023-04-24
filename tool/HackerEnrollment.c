@@ -19,10 +19,10 @@ typedef struct Course_t{
 }*Course;
 
 typedef struct Student_t{
-    char m_studentID[ID_LENGTH];
+    int m_studentID;
     char *m_name;
-    char *m_friendsList[ID_LENGTH];
-    char *m_enemiesList[ID_LENGTH];
+    Course *m_preferredCourses;
+    int *m_friendsList, *m_enemies;
 }*Student;
 
 typedef struct EnrollmentSystem_t{
@@ -31,16 +31,14 @@ typedef struct EnrollmentSystem_t{
     Course *m_coursesList;
     int m_studentsNum, m_coursesNum, m_hackersNum;
     int **m_queues;
-
-
-
 } *EnrollmentSystem;
 
 //=================================================================================
 //Inner Functions Declerations:
 //=================================================================================
-
-long int fileLength(FILE* file);
+void examineFileLinesAndSize(FILE* file, int *lines, int *maxWordLength);
+Student *createStudentListFromFile(FILE* students, int *length);
+Student findByID(EnrollmentSystem sys, char* ID);
 
 
 //==================================================================================
@@ -56,19 +54,18 @@ long int fileLength(FILE* file);
  * ALL MALLOCS SHOULD BE FREED IN DESTROY FUCTION??
  * returns a pointer
  * */
+
+
 EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
 
     
     if(!students||!courses||!hackers){
-        return ;//BAD PARAM
+        return NULL;//BAD PARAM
     }
 
     EnrollmentSystem newSys=(EnrollmentSystem)malloc(sizeof(EnrollmentSystem));
-
-
-
-
-
+    int studentsNum;
+    newSys->m_studentsList= createStudentListFromFile(students,&studentsNum);
     return newSys;
 }
 
@@ -87,21 +84,61 @@ void hackEnrollment(EnrollmentSystem sys, FILE* out);
 //Inner Functions
 //=========================================================================
 
+Student *createStudentListFromFile(FILE* students, int *length){
+    int maxNameSize;
+    examineFileLinesAndSize(students,length,&maxNameSize);
+    int ID;
+    char name[maxNameSize+1], lastName[maxNameSize+1], trashStr[maxNameSize+1];
+    char temp='a';
 
-//returns file length and doesnt change the file ptr
+    Student *studentList=(Student*)malloc(sizeof(Student)*(*length));
+
+
+    do {
+            for(int k=0;k<*length;k++){
+                for (int i=0;i<7;i++){
+                        switch (i){
+                            case 0:
+                                fscanf(students,"%d",ID);
+                                break;
+                            case 3:
+                                fgets(name,maxNameSize,students);
+                                break;
+                            case 4:
+                                fgets(lastName,maxNameSize,students);
+                                break;
+                            default:
+                                fgets(trashStr,maxNameSize,students);
+                        }
+                        studentList[k]->m_studentID=ID;
+                        studentList[k]->m_name= (char*)malloc(sizeof(char)*(strlen(name)+strlen(lastName)+2));
+                        if(!studentList[k]->m_name){
+                            return NULL;// MALLOC FAIL
+                        }
+                        strcpy(studentList[k]->m_name,name+' ');
+                        strcat(studentList[k]->m_name,lastName);
+                }
+            }
+
+    }
+    while (fgetc(students)!=EOF);
+    return studentList;
+}
+
+
+//returns file length and doesn't change the file ptr
 long int fileLength(FILE* file){
     fseek(file,0,SEEK_END);
     long int length=ftell(file);
     fseek(file, 0, SEEK_SET);
     return length;
-
 }
 
-void examinFileLinesAndSize(FILE* file, int *lines, int *maxWordLength){
+void examineFileLinesAndSize(FILE* file, int *lines, int *maxWordLength){
     if(!file){
         return; //BAD PARAM
     }
-    int lineCouner=0,maxWord=0,tempMaxWord=1;
+    int lineCounter=0,maxWord=0,tempMaxWord=1;
     char tempC;
     while ((tempC=fgetc(file))!=EOF){
         switch (tempC)
@@ -113,7 +150,7 @@ void examinFileLinesAndSize(FILE* file, int *lines, int *maxWordLength){
             tempMaxWord=0;
             break;
         case '\n':
-            lineCouner++;
+            lineCounter++;
             if (maxWord<tempMaxWord){
                 maxWord=tempMaxWord;
             }
@@ -124,19 +161,11 @@ void examinFileLinesAndSize(FILE* file, int *lines, int *maxWordLength){
             break;
         }
     }
-    *lines=lineCouner;
+    *lines=lineCounter;
     *maxWordLength=maxWord;
+    fseek(file, 0, SEEK_SET);
 
-    
-    
 }
-
-
-
-
-
-
-
 
 
 //=================================================================================
