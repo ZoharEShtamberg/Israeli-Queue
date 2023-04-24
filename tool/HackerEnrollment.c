@@ -19,11 +19,10 @@ typedef struct Course_t{
 }*Course;
 
 typedef struct Student_t{
-    int m_studentID[ID_LENGTH];
+    int m_studentID;
     char *m_name;
-    course *m_preferredCourses;
-    char *m_friendsList[ID_LENGTH];
-    char *m_enemiesList[ID_LENGTH];
+    Course *m_preferredCourses;
+    int *m_friendsList, *m_enemies;
 }*Student;
 
 typedef struct EnrollmentSystem_t{
@@ -39,6 +38,7 @@ typedef struct EnrollmentSystem_t{
 //=================================================================================
 void examineFileLinesAndSize(FILE* file, int *lines, int *maxWordLength);
 Student *createStudentListFromFile(FILE* students, int *length);
+Student findByID(EnrollmentSystem sys, char* ID);
 
 
 //==================================================================================
@@ -65,7 +65,7 @@ EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
 
     EnrollmentSystem newSys=(EnrollmentSystem)malloc(sizeof(EnrollmentSystem));
     int studentsNum;
-    newSys->m_studentsList= createStudentListFromFile(students,&studentsNUM);
+    newSys->m_studentsList= createStudentListFromFile(students,&studentsNum);
     return newSys;
 }
 
@@ -87,32 +87,42 @@ void hackEnrollment(EnrollmentSystem sys, FILE* out);
 Student *createStudentListFromFile(FILE* students, int *length){
     int maxNameSize;
     examineFileLinesAndSize(students,length,&maxNameSize);
-    int ID[ID_LENGTH];
-    char name[maxNameSize+1], lastName[maxNameSize+1];
+    int ID;
+    char name[maxNameSize+1], lastName[maxNameSize+1], trashStr[maxNameSize+1];
     char temp='a';
 
-    Student *studentList=(Student)malloc(sizeof(Student)*(*length));
+    Student *studentList=(Student*)malloc(sizeof(Student)*(*length));
 
-    while (temp!=EOF){
-            while (temp!='\n'){
+
+    do {
+            for(int k=0;k<*length;k++){
                 for (int i=0;i<7;i++){
-                    while(temp!=' '){
                         switch (i){
                             case 0:
-                                fscanf(student,)
-
+                                fscanf(students,"%d",ID);
+                                break;
+                            case 3:
+                                fgets(name,maxNameSize,students);
+                                break;
+                            case 4:
+                                fgets(lastName,maxNameSize,students);
+                                break;
+                            default:
+                                fgets(trashStr,maxNameSize,students);
                         }
-
+                        studentList[k]->m_studentID=ID;
+                        studentList[k]->m_name= (char*)malloc(sizeof(char)*(strlen(name)+strlen(lastName)+2));
+                        if(!studentList[k]->m_name){
+                            return NULL;// MALLOC FAIL
+                        }
+                        strcpy(studentList[k]->m_name,name+' ');
+                        strcat(studentList[k]->m_name,lastName);
                 }
             }
-            temp= getc(students);
-            ID[i++]=(int)temp-'0';
-        }
-        temp=getc(students);
 
     }
-
-
+    while (fgetc(students)!=EOF);
+    return studentList;
 }
 
 
@@ -122,7 +132,6 @@ long int fileLength(FILE* file){
     long int length=ftell(file);
     fseek(file, 0, SEEK_SET);
     return length;
-
 }
 
 void examineFileLinesAndSize(FILE* file, int *lines, int *maxWordLength){
@@ -154,14 +163,9 @@ void examineFileLinesAndSize(FILE* file, int *lines, int *maxWordLength){
     }
     *lines=lineCounter;
     *maxWordLength=maxWord;
+    fseek(file, 0, SEEK_SET);
+
 }
-
-
-
-
-
-
-
 
 
 //=================================================================================
