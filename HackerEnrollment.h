@@ -12,6 +12,7 @@ typedef struct Student_t *Student;
 typedef struct Hacker_t *Hacker;
 typedef struct Course_t *Course;
 
+
 typedef enum { HACKER_ENROLLMENT_SUCCESS, HACKER_ENROLLMENT_ALLOC_FAILED, HACKER_ENROLLMENT_BAD_PARAM, HACKER_ENROLLMENT_ERROR } HackerEnrollmentError;
 /**Error clarification:
  * HACKER_ENROLLMENT_SUCCESS: Indicates the function has completed its task successfully with no errors.
