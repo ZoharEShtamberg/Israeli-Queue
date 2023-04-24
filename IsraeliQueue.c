@@ -128,7 +128,7 @@ static Node findFriend(IsraeliQueue queue, void* item){
 			while(curr){
 				if(areEnemies(((IsraeliItem)curr->m_item)->m_data, item, queue) &&
 				   ((IsraeliItem)curr->m_item)->m_enemiesBlocked< RIVAL_QUOTA){
-					((IsraeliItem)curr->m_item)->m_enemiesBlocked++;
+					((IsraeliItem)curr->m_item)->m_enemiesBlocked++;// bug
 					friend=NULL;
 					break;
 				}
@@ -137,7 +137,7 @@ static Node findFriend(IsraeliQueue queue, void* item){
 		}
 		curr = curr->m_next;
 	}
-	if(friend &&(IsraeliItem)friend->m_next && ((IsraeliItem)friend->m_item)->m_friendsHelped < FRIEND_QUOTA){
+	if(friend && ((IsraeliItem)friend->m_item)->m_friendsHelped < FRIEND_QUOTA){
 		//if the friend is already the last one, if is not entered, and it doesn't count as a 'jesta'
 		((IsraeliItem)friend->m_item)->m_friendsHelped++;
 		return friend;
