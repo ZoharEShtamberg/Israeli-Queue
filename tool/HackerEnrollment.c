@@ -64,8 +64,9 @@ EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
     }
 
     EnrollmentSystem newSys=(EnrollmentSystem)malloc(sizeof(EnrollmentSystem));
-    int studentsNum;
-    newSys->m_studentsList= createStudentListFromFile(students,&studentsNum);
+    //check the students num
+    newSys->m_studentsList= createStudentListFromFile(students,&(newSys->m_studentsNum));
+
     return newSys;
 }
 
@@ -78,7 +79,6 @@ EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues);
  * 
  * */
 void hackEnrollment(EnrollmentSystem sys, FILE* out);
-
 
 /**Function Description:
  *
@@ -93,21 +93,21 @@ int isTheSameStudent(void* stuA, void* stuB){
 
 
 
-
-
-
-
 //=========================================================================
 //Inner Functions
 //=========================================================================
-Student *createStudentListFromFile(FILE* students, int *listLength){
+//malloc notes: all objects and strings in object should be freed in destroy function
+Student *createStudentListFromFile(FILE* students, int *length){
     int maxNameSize;
     int lines;
     examineFileLinesAndSize(students,&lines,&maxNameSize);
     int ID;
     char *name=(char*)malloc(sizeof(char)*(maxNameSize+1)),
             *lastName=(char*)malloc(sizeof(char)*(maxNameSize+1)),
-            *trashStr=(char*)malloc(sizeof(char)*(maxNameSize+1));//char temp='a';
+            *trashStr=(char*)malloc(sizeof(char)*(maxNameSize+1));
+    if(!name||!lastName||!trashStr){
+        return NULL;//MALLOC FAIL
+    }
 
     Student *studentList=(Student*)malloc(sizeof(Student)*(lines));
 
@@ -116,7 +116,7 @@ Student *createStudentListFromFile(FILE* students, int *listLength){
             switch (i){
                 case 0:
                     if(fscanf(students,"%d",&ID)!=1){
-                     i=STUDENT_TXT_ARG-2;
+                        return NULL;//BAD FILE
                     }
                     break;
                 case 3:
@@ -126,14 +126,11 @@ Student *createStudentListFromFile(FILE* students, int *listLength){
                     fscanf(students,"%s",lastName);
                     break;
                 default:
-                    if (fgetc(students)==EOF){
-
-                    }
                     fscanf(students,"%s",trashStr);
                     break;
             }
         }
-
+        studentList[k]=(Student)malloc(sizeof(Student));
         studentList[k]->m_studentID=ID;
         studentList[k]->m_name= (char*)malloc(sizeof(char)*(strlen(name)+strlen(lastName)+2));
         if(!studentList[k]->m_name){
@@ -141,15 +138,8 @@ Student *createStudentListFromFile(FILE* students, int *listLength){
         }
         strcpy(studentList[k]->m_name,name+' ');
         strcat(studentList[k]->m_name,lastName);
-        studentList[k]->m_preferredCourses=NULL;
-
     }
-
-    free(name);
-    free(lastName);
-    free(trashStr);
-
-    *listLength=lines;
+    *length=lines;
     return studentList;
 }
 
@@ -171,6 +161,7 @@ long int fileLength(FILE* file){
     return length;
 }
 
+//
 void examineFileLinesAndSize(FILE* file, int *lines, int *maxWordLength){
     if(!file){
         return; //BAD PARAM
