@@ -7,7 +7,7 @@
 
 
 #define ID_LENGTH 10
-
+#define STUDENT_TXT_ARG 7
 
 //=================================================================
 /*typedefs & struct declaration*/
@@ -16,6 +16,7 @@
 
 typedef struct Course_t{
     int m_number, m_size;
+    IsraeliQueue m_queue;
 }*Course;
 
 typedef struct Student_t{
@@ -55,7 +56,6 @@ Student findByID(EnrollmentSystem sys, char* ID);
  * returns a pointer
  * */
 
-
 EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
 
     
@@ -80,50 +80,87 @@ EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues);
 void hackEnrollment(EnrollmentSystem sys, FILE* out);
 
 
+/**Function Description:
+ *
+ * */
+int isTheSameStudent(void* stuA, void* stuB){
+    Student student1=(Student)stuA, student2=(Student)stuB;
+    if(student1->m_studentID==student2->m_studentID){
+        return 1;
+    }
+    return 0;
+}
+
+
+
+
+
+
+
 //=========================================================================
 //Inner Functions
 //=========================================================================
-
-Student *createStudentListFromFile(FILE* students, int *length){
+Student *createStudentListFromFile(FILE* students, int *listLength){
     int maxNameSize;
-    examineFileLinesAndSize(students,length,&maxNameSize);
+    int lines;
+    examineFileLinesAndSize(students,&lines,&maxNameSize);
     int ID;
-    char name[maxNameSize+1], lastName[maxNameSize+1], trashStr[maxNameSize+1];
-    char temp='a';
+    char *name=(char*)malloc(sizeof(char)*(maxNameSize+1)),
+            *lastName=(char*)malloc(sizeof(char)*(maxNameSize+1)),
+            *trashStr=(char*)malloc(sizeof(char)*(maxNameSize+1));//char temp='a';
 
-    Student *studentList=(Student*)malloc(sizeof(Student)*(*length));
+    Student *studentList=(Student*)malloc(sizeof(Student)*(lines));
 
+    for(int k=0;k<lines;k++){
+        for (int i=0;i<7;i++){
+            switch (i){
+                case 0:
+                    if(fscanf(students,"%d",&ID)!=1){
+                     i=STUDENT_TXT_ARG-2;
+                    }
+                    break;
+                case 3:
+                    fscanf(students,"%s",name);
+                    break;
+                case 4:
+                    fscanf(students,"%s",lastName);
+                    break;
+                default:
+                    if (fgetc(students)==EOF){
 
-    do {
-            for(int k=0;k<*length;k++){
-                for (int i=0;i<7;i++){
-                        switch (i){
-                            case 0:
-                                fscanf(students,"%d",ID);
-                                break;
-                            case 3:
-                                fgets(name,maxNameSize,students);
-                                break;
-                            case 4:
-                                fgets(lastName,maxNameSize,students);
-                                break;
-                            default:
-                                fgets(trashStr,maxNameSize,students);
-                        }
-                        studentList[k]->m_studentID=ID;
-                        studentList[k]->m_name= (char*)malloc(sizeof(char)*(strlen(name)+strlen(lastName)+2));
-                        if(!studentList[k]->m_name){
-                            return NULL;// MALLOC FAIL
-                        }
-                        strcpy(studentList[k]->m_name,name+' ');
-                        strcat(studentList[k]->m_name,lastName);
-                }
+                    }
+                    fscanf(students,"%s",trashStr);
+                    break;
             }
+        }
+
+        studentList[k]->m_studentID=ID;
+        studentList[k]->m_name= (char*)malloc(sizeof(char)*(strlen(name)+strlen(lastName)+2));
+        if(!studentList[k]->m_name){
+            return NULL;// MALLOC FAIL
+        }
+        strcpy(studentList[k]->m_name,name+' ');
+        strcat(studentList[k]->m_name,lastName);
+        studentList[k]->m_preferredCourses=NULL;
 
     }
-    while (fgetc(students)!=EOF);
+
+    free(name);
+    free(lastName);
+    free(trashStr);
+
+    *listLength=lines;
     return studentList;
 }
+
+
+
+
+
+//=========================================================
+//inner inner functions
+//=========================================================
+
 
 
 //returns file length and doesn't change the file ptr
@@ -167,21 +204,20 @@ void examineFileLinesAndSize(FILE* file, int *lines, int *maxWordLength){
 
 }
 
-
 //=================================================================================
 //FRIENDSHIP FUNCTIONS: they really explain themselves...
 //==================================================================================
 
 
 //TODO: rewrite this whole thing checks if 
-int friendshipByHackerFile(Student stu, Student hacker);
+int friendshipByHackerFile(void* studentA, void* StudentB);
 
 
 //func desc: ill let you know when i find out
-int friendshipByASCII(Student stu, Student hacker);
+int friendshipByASCII(void* studentA, void* StudentB);
 
 
 //func desc: ill let you know when i find out
-int friendshipByIDQuetient(Student stu, Student hacker);
+int friendshipByIDQuetient(void* studentA, void* StudentB);
 
 

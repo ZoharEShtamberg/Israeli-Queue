@@ -59,4 +59,10 @@ void ignoreUpper(EnrollmentSystem sys);
  */
  void destroyEnrollment(EnrollmentSystem sys);
 
+
+/**
+ * returns 1 if equal and 0 if not
+ */
+int isTheSameStudent(void* stuA, void* stuB);
+
 #endif
