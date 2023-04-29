@@ -1,6 +1,6 @@
 #include <stdio.h>
 //#include <stdbool.h>
-//#include <assert.h>
+#include <assert.h>
 #include <stdlib.h>
 #include "IsraeliQueue.h"
 #include <string.h>
@@ -11,7 +11,7 @@
 #define ID_INDEX 0
 #define F_NAME_INDEX 3
 #define L_NAME_INDEX 4
-#define RIVALRY_THR 20
+#define RIVALRY_THR (-20)
 #define FRIENDSHIP_THR 20
 #define BIGGEST_INT_SIZE 9
 #define AMOUNT_OF_FF 3
@@ -57,12 +57,43 @@ Hacker *createHackersListFromFile(FILE* hackers, int *length, Student *studentLi
 void examineFileLinesAndSize(FILE* file, int *lines, int *maxWordLength);
 Student findStudentByID(Student *studentList, int ID);
 long int fileLength(FILE* file);
-void copyIntArray(int src[],int dest[], int length);
+void copyIntArray(const int src[],int dest[], int length);
 int max(int a, int b);
 
 //==================================================================================
 //LIBRARY FUNCTIONS: lord help
 //==================================================================================
+
+
+void destroyEnrollment(EnrollmentSystem sys){
+    if(!sys){
+        return;//is this an error?
+    }
+    if (sys->m_studentsList){
+        for (int i=0;i<sys->m_studentsNum;i++){
+            free(sys->m_studentsList[i]->m_name);
+            free(sys->m_studentsList[i]->m_friendsList);
+            free(sys->m_studentsList[i]->m_enemiesList);
+        }
+    }
+    free(sys->m_studentsList);
+    if(sys->m_hackersList){
+        for(int i=0;i<sys->m_hackersNum;i++){
+            free(sys->m_hackersList[i]->m_preferredCourses);
+        }
+    }
+    free(sys->m_hackersList);
+    if(sys->m_coursesList){
+        for (int i=0; i<sys->m_coursesNum; i++){
+            //TODO put destroy queue
+        }
+    }
+    free(sys->m_coursesList);
+    free(sys->m_functionArray);
+    free(sys);
+}
+
+
 
 /**Creates a new Enrollment system based on the files provided, files should be
  * according to to following structure:
@@ -79,15 +110,17 @@ EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
         return NULL;//BAD PARAM
     }
     EnrollmentSystem newSys=(EnrollmentSystem)malloc(sizeof(EnrollmentSystem));
-    //check the students num
+    if (!newSys){
+        return NULL;//MALLOC FAIL
+    }
     newSys->m_studentsList= createStudentListFromFile(students,&(newSys->m_studentsNum));
     newSys->m_coursesList= createCourseListFromFile(courses,&(newSys->m_coursesNum));
     int maxArr=max(newSys->m_coursesNum,newSys->m_studentsNum);
     newSys->m_hackersList= createHackersListFromFile(hackers,&(newSys->m_hackersNum),newSys->m_studentsList, maxArr);
-
     newSys->m_functionArray= malloc(sizeof (FriendshipFunction)*AMOUNT_OF_FF);
-    if (!newSys->m_functionArray){
-        //TODO: destroy~~!!!!!
+
+    if (!newSys->m_functionArray||!newSys->m_hackersList||!newSys->m_coursesList||!newSys->m_studentsList){
+        destroyEnrollment(newSys);
         return NULL;//MALLOC FAIL
     }
     // TODO: newSys->m_functionArray={ &friendshipByIDDiff, &friendshipByASCII, &friendshipByHackerFile};
@@ -116,18 +149,15 @@ int isTheSameStudent(void* stuA, void* stuB){
 }
 
 
-
 //=========================================================================
 //Inner Functions
 //=========================================================================
 //malloc notes: all objects and strings in object should be freed in destroy function
 Student *createStudentListFromFile(FILE* students, int *length){
-
     if(!students){
         return NULL;//BAD PARAM
     }
     int maxNameSize,lines,ID;
-
     examineFileLinesAndSize(students,&lines,&maxNameSize);
 
     char *name=(char*)malloc(sizeof(char)*(maxNameSize+1)),
@@ -139,7 +169,6 @@ Student *createStudentListFromFile(FILE* students, int *length){
         free(trashStr);
         return NULL;//MALLOC FAIL
     }
-
     Student *studentList=(Student*)malloc((sizeof(Student))*(lines+1));
     if (!studentList){
         return NULL;//MALLOC FAIL
@@ -158,6 +187,8 @@ Student *createStudentListFromFile(FILE* students, int *length){
                 case L_NAME_INDEX:
                     fscanf(students,"%s",lastName);
                     break;
+                case STUDENT_TXT_ARG-1:
+                    while (fgetc(students)!='\n'){}
                 default:
                     fscanf(students,"%s",trashStr);
                     break;
@@ -212,6 +243,7 @@ Course *createCourseListFromFile(FILE* courses, int *length){
         if(!courseList[i]){
             return NULL;//MALLOC FAIL
         }
+        assert(courseNum!=0&&courseSize!=0);
 
         courseList[i]->m_number=courseNum;
         courseList[i]->m_size=courseSize;
@@ -364,11 +396,13 @@ Student findStudentByID(Student *studentList, int ID){
     }
     return NULL;
 }
-void copyIntArray(int src[],int dest[], int length){
+
+void copyIntArray(const int src[],int dest[], int length){
     for (int i=0;i<length; i++){
         dest[i]=src[i];
     }
 }
+
 //returns file length and doesn't change the file ptr
 long int fileLength(FILE* file){
     fseek(file,0,SEEK_END);
@@ -376,14 +410,16 @@ long int fileLength(FILE* file){
     fseek(file, 0, SEEK_SET);
     return length;
 }
-//
+
+//saves lines in file and maximum word length to ptr
+//resets file access point
 void examineFileLinesAndSize(FILE* file, int *lines, int *maxWordLength){
     if(!file){
         return; //BAD PARAM
     }
     int lineCounter=0,maxWord=0,tempMaxWord=1;
     char tempC;
-    while ((tempC=fgetc(file))!=EOF){
+    while ((tempC=(char)fgetc(file))!=EOF){
         switch (tempC)
         {
         case ' ':
@@ -416,10 +452,10 @@ int max(int a, int b){
     return b;
 }
 
-void swap(Student studentA,Student studentB){
-    Student temp1=studentA;
-    studentA=studentB;
-    studentB=temp1;
+void swap(Student *studentA,Student *studentB){
+    Student temp1=*studentA;
+    *studentA=*studentB;
+    *studentB=temp1;
 }
 
 
@@ -428,7 +464,7 @@ void swap(Student studentA,Student studentB){
 //==================================================================================
 
 
-//TODO: rewrite this whole thing checks if 
+//TODO:  checks if works
 int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB){
     if(!ptrStudentA||!ptrStudentB){
         return -1;//BAD PARAM
@@ -437,7 +473,7 @@ int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB){
 
     int i=0;
     if (studentA->m_friendsList==NULL){
-        swap(studentA,studentB);
+        swap(&studentA,&studentB);
     }
 
     while(studentA->m_friendsList[i]!=0){
@@ -462,12 +498,12 @@ int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB){
 //func desc: ill let you know when I find out
 int friendshipByASCII(void* ptrStudentA, void* ptrStudentB){
     if(!ptrStudentA||!ptrStudentB){
-        return -1;//BAD PARAM
+        return 0;//BAD PARAM ??? TODO check return value
     }
     Student studentA=(Student)ptrStudentA, studentB=(Student)ptrStudentB;
-    int stuANameLen=strlen(studentA->m_name), stuBNameLen=strlen(studentB->m_name), sum=0;
+    int stuANameLen=(int)strlen(studentA->m_name), stuBNameLen=(int)strlen(studentB->m_name), sum=0;
     if (stuANameLen<stuBNameLen){
-        swap(studentA,studentB);
+        swap(&studentA,&studentB);
     }
     for (int i=0;i<stuBNameLen;i++){
         sum+= abs((int)(studentA->m_name[i]-studentB->m_name[i]));
@@ -492,38 +528,3 @@ int friendshipByIDDiff(void* ptrStudentA, void* ptrStudentB){
     }
     return sum;
 }
-
-/*
-int main(){
-
-    FILE* students=fopen("C:\\Users\\Daniel\\Desktop\\ex1\\ExampleTest\\courses.txt", "r");
-    if (!students){
-        return 0;
-    }
-    int stuLength=0;
-    Student *studentList=createStudentListFromFile(students,&stulength)!=NULL){
-        printf("did it work?\n");
-    }
-
-    FILE* hackers=fopen("C:\\Users\\Daniel\\Desktop\\ex1\\ExampleTest\\courses.txt", "r");
-    if (!hackers){
-        return 0;
-    }
-    int hackLength=0;
-    if(createHackerListFromFile(students,&hackLength,studentList)!=NULL){
-        printf("did it work?\n");
-    }
-
-    FILE* courses=fopen("C:\\Users\\Daniel\\Desktop\\ex1\\ExampleTest\\courses.txt", "r");
-    if (!courses){
-        return 0;
-    }
-    int corLength=0;
-    if(createCourseListFromFile(students,&corLength)!=NULL){
-        printf("did it work?\n");
-    }
-
-    return 0;
-
-}
- */
