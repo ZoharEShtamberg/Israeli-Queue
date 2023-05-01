@@ -113,13 +113,16 @@ static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue){
  * */
 static Node findFriend(IsraeliQueue queue, void* item){
 	Node curr = queue->m_head, friend=NULL;
+	if(curr==NULL){	//to avoid de-referencing NULL
+		return curr;
+	}
 	while(curr->m_next){
 		if(areFriends(((IsraeliItem)curr->m_item)->m_data, item, queue)){
 			friend = curr;//found a friend
 			while(curr){
 				if(areEnemies(((IsraeliItem)curr->m_item)->m_data, item, queue) &&
 				   ((IsraeliItem)curr->m_item)->m_enemiesBlocked< RIVAL_QUOTA){
-					((IsraeliItem)curr->m_item)->m_enemiesBlocked++;// bug
+					((IsraeliItem)curr->m_item)->m_enemiesBlocked++;
 					friend=NULL;
 					break;
 				}
@@ -129,7 +132,6 @@ static Node findFriend(IsraeliQueue queue, void* item){
 		curr = curr->m_next;
 	}
 	if(friend && ((IsraeliItem)friend->m_item)->m_friendsHelped < FRIEND_QUOTA){
-		//if the friend is already the last one, if is not entered, and it doesn't count as a 'jesta'
 		((IsraeliItem)friend->m_item)->m_friendsHelped++;
 		return friend;
 	}
@@ -140,6 +142,7 @@ static Node findFriend(IsraeliQueue queue, void* item){
  * @note: ...-> front -> behind ->...
  * */
 void insertBehind(Node behind, Node front){
+	assert(front!=NULL);
 	Node temp = front->m_next;
 	front->m_next = behind;
 	behind->m_next = temp;
@@ -169,7 +172,7 @@ void destroyLinkedList(Node list){
 IsraeliQueue IsraeliQueueCreate(FriendshipFunction *friendshipFunctionList_In, ComparisonFunction comparisonFunction,
 								int friendship_th, int rivalry_th){
 
-	if(!comparisonFunction||!friendshipFunctionList_In){
+	if(!comparisonFunction){
 		return NULL; //bad parameter
 	}
 
@@ -206,6 +209,10 @@ IsraeliQueueError IsraeliQueueEnqueue(IsraeliQueue queue, void *data){
 	newItem->m_data = data;
 	newNode->m_item = newItem;
 	newNode->m_next=NULL;
+	if(friend==NULL){
+		queue->m_head=newNode;
+		return ISRAELIQUEUE_SUCCESS;
+	}
 	insertBehind(newNode, friend);
 	return ISRAELIQUEUE_SUCCESS;
 }
@@ -221,4 +228,9 @@ void IsraeliQueueDestroy(IsraeliQueue queue){
 	}
 	destroyLinkedList(queue->m_head);	// destroy queue nodes
 	free(queue);		//destroy queue struct
+}
+
+
+void* IsraeliQueueDequeue(IsraeliQueue queue){
+
 }
