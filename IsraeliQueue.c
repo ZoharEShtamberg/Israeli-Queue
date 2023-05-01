@@ -14,7 +14,7 @@
 
 typedef struct Node_t{
 	void *m_item;
-	struct node_t *m_next;
+	struct Node_t *m_next;
 }*Node;
 
 /**m_head: pointer to the first obj in line. each obj points to the one behind it.
@@ -232,5 +232,4 @@ void IsraeliQueueDestroy(IsraeliQueue queue){
 
 
 void* IsraeliQueueDequeue(IsraeliQueue queue){
-
 }
