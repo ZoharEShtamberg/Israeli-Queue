@@ -14,6 +14,7 @@ typedef struct Course_t *Course;
 
 
 typedef enum { HACKER_ENROLLMENT_SUCCESS, HACKER_ENROLLMENT_ALLOC_FAILED, HACKER_ENROLLMENT_BAD_PARAM, HACKER_ENROLLMENT_ERROR } HackerEnrollmentError;
+
 /**Error clarification:
  * HACKER_ENROLLMENT_SUCCESS: Indicates the function has completed its task successfully with no errors.
  * HACKER_ENROLLMENT_ALLOC_FAILED: Indicates memory allocation failed during the execution of the function.

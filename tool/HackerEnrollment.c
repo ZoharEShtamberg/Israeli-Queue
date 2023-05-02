@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "IsraeliQueue.h"
 #include <string.h>
+#include "FileHelper.h"
 
 
 #define ID_LENGTH 10
@@ -13,7 +14,6 @@
 #define L_NAME_INDEX 4
 #define RIVALRY_THR (-20)
 #define FRIENDSHIP_THR 20
-#define BIGGEST_INT_SIZE 9
 #define AMOUNT_OF_FF 3
 //=================================================================
 /*typedefs & struct declaration*/
@@ -53,12 +53,10 @@ typedef struct EnrollmentSystem_t{
 Student *createStudentListFromFile(FILE* students, int *length);
 Course *createCourseListFromFile(FILE* courses, int *length);
 Hacker *createHackersListFromFile(FILE* hackers, int *length, Student *studentList,int maxArrayNum);
-
-void examineFileLinesAndSize(FILE* file, int *lines, int *maxWordLength);
 Student findStudentByID(Student *studentList, int ID);
-long int fileLength(FILE* file);
-void copyIntArray(const int src[],int dest[], int length);
-int max(int a, int b);
+
+
+
 
 //==================================================================================
 //LIBRARY FUNCTIONS: lord help
@@ -154,226 +152,137 @@ int isTheSameStudent(void* stuA, void* stuB){
 //=========================================================================
 //malloc notes: all objects and strings in object should be freed in destroy function
 Student *createStudentListFromFile(FILE* students, int *length){
-    if(!students){
-        return NULL;//BAD PARAM
-    }
-    int maxNameSize,lines,ID;
-    examineFileLinesAndSize(students,&lines,&maxNameSize);
-
-    char *name=(char*)malloc(sizeof(char)*(maxNameSize+1)),
-    *lastName=(char*)malloc(sizeof(char)*(maxNameSize+1)),
-    *trashStr=(char*)malloc(sizeof(char)*(maxNameSize+1));
-    if(!name||!lastName||!trashStr){
-        free(name);
-        free(lastName);
-        free(trashStr);
-        return NULL;//MALLOC FAIL
-    }
+    assert(students!=NULL);
+    int maxNameSize= getMaxWordInFile(students), lines= getLineNumInFile(students);
+    char *tempWordStr=(char*) malloc(sizeof (char)*maxNameSize);
+    char *studentName=(char*) malloc(sizeof (char )*(maxNameSize*2+2));
     Student *studentList=(Student*)malloc((sizeof(Student))*(lines+1));
-    if (!studentList){
+    if (!studentList||!tempWordStr||!studentName){
         return NULL;//MALLOC FAIL
     }
     for(int k=0;k<lines;k++){
-        for (int i=0;i<STUDENT_TXT_ARG;i++){
-            switch (i){
-                case ID_INDEX:
-                    if(fscanf(students,"%d",&ID)!=1){
-                        lines--;//BAD FILE
-                    }
-                    break;
-                case F_NAME_INDEX:
-                    fscanf(students,"%s",name);
-                    break;
-                case L_NAME_INDEX:
-                    fscanf(students,"%s",lastName);
-                    break;
-                case STUDENT_TXT_ARG-1:
-                    while (fgetc(students)!='\n'){}
-                default:
-                    fscanf(students,"%s",trashStr);
-                    break;
-            }
-        }
+
         studentList[k]=(Student)malloc(sizeof(Student));
         if (studentList[k]){
             return NULL;//MALLOC FAIL
         }
-        studentList[k]->m_studentID=ID;
-        studentList[k]->m_name= (char*)malloc(sizeof(char)*(strlen(name)+strlen(lastName)+2));
+        for (int i=0;i<STUDENT_TXT_ARG;i++){
+            switch (i) {
+                case ID_INDEX:
+                    putNextWordToString(students, tempWordStr);
+                    studentList[i]->m_studentID=strtol(tempWordStr,&tempWordStr, 10);
+                    break;
+                case F_NAME_INDEX:
+                    putNextWordToString(students, tempWordStr);
+                    strcpy(studentName,tempWordStr);
+                    break;
+                case L_NAME_INDEX:
+                    putNextWordToString(students, tempWordStr);
+                    strcat(studentName, " ");
+                    strcat(studentName, tempWordStr);
+                    break;
+                default:
+                    putNextWordToString(students,tempWordStr);
+                    break;
+            }
+        }
+        studentList[k]->m_name= (char*)malloc(sizeof(char)*(strlen(studentName)));
         if(!studentList[k]->m_name){
             return NULL;// MALLOC FAIL
         }
-        strcpy(studentList[k]->m_name,name);
+        strcpy(studentList[k]->m_name,studentName);
         strcat(studentList[k]->m_name," ");
-        strcat(studentList[k]->m_name,lastName);
         studentList[k]->m_enemiesList=NULL;
         studentList[k]->m_friendsList=NULL;
     }
-    *length=lines;
-    free(name);
-    free(lastName);
-    free(trashStr);
+    free(tempWordStr);
+    free(studentName);
+    length[0]=lines;
     studentList[lines]=NULL;
     return studentList;
 }
 
 
 Course *createCourseListFromFile(FILE* courses, int *length){
-    if(!courses||!length){
-        return NULL;//BAD PARAM
-    }
-    int maxWord,lines;
-    examineFileLinesAndSize(courses,&lines,&maxWord);
-    if(maxWord>BIGGEST_INT_SIZE){
-        return NULL;//not compatible with question parameters;
-    }
-
-    int courseNum,courseSize;
+    assert(courses!=NULL);
+    int maxWord= getMaxWordInFile(courses),lines= getLineNumInFile(courses);
     Course *courseList=(Course*)malloc(sizeof(Course)*(lines+1));
-    if (!courseList){
+    char *tempStr=(char*) malloc(sizeof (char)*(maxWord*2+2));
+    if (!courseList||!tempStr){
         return NULL;//MALLOC FAIL
     }
-
     for (int i=0;i<lines;i++){
-        if(fscanf(courses,"%d %d",&courseNum, &courseSize)!=2){
-            break;
-        }
-
         courseList[i]=(Course)malloc(sizeof(Course));
         if(!courseList[i]){
             return NULL;//MALLOC FAIL
         }
-        assert(courseNum!=0&&courseSize!=0);
-
-        courseList[i]->m_number=courseNum;
-        courseList[i]->m_size=courseSize;
+        putNextWordToString(courses,tempStr);
+        courseList[i]->m_number= strtol(tempStr,&tempStr,10);
+        putNextWordToString(courses,tempStr);
+        courseList[i]->m_size= strtol(tempStr,&tempStr,10);
         courseList[i]->m_queue= IsraeliQueueCreate(NULL,isTheSameStudent,FRIENDSHIP_THR,RIVALRY_THR);
         if (!courseList[i]->m_queue){
             return NULL;//CREATE FAIL
         }
-
     }
     courseList[lines]=NULL;
-    *length=lines;
+    free(tempStr);
+    length[0]=lines;
     return courseList;
 }
 
 
-Hacker *createHackerListFromFile(FILE* hackers, int *length,Student *studentList, int maxArrayNum){
-    if(!hackers||!length){
-        return NULL;//BAD PARAM
-    }
-
-    int maxWord,lines;
-    examineFileLinesAndSize(hackers,&lines,&maxWord);
-    if(maxWord>BIGGEST_INT_SIZE){
-        return NULL;//not compatible with question parameters;
-    }
-
-    Hacker *hackerList=(Hacker*) malloc(sizeof(Hacker)*((lines/4)+1));
-    if(!hackerList){
+Hacker *createHackersListFromFile(FILE* hackers, int *length,Student *studentList, int maxArrayNum){
+    assert(hackers!=NULL);
+    int maxLine= getMaxLineInFile(hackers) ,linesNum= getLineNumInFile(hackers);
+    Hacker *hackerList=(Hacker*) malloc(sizeof(Hacker)*((linesNum/4)+1));
+    char *tempStr=(char*) malloc(sizeof(char)*maxLine);
+    if (!tempStr||!hackerList){
         return NULL;//MALLOC FAIL
     }
-
-    char *tempStr=(char*) malloc(sizeof(char)*maxWord);
-    if (!tempStr){
+    int *tempArray=(int*)malloc(sizeof(int)*maxArrayNum);
+    if(!tempArray){
         return NULL;//MALLOC FAIL
     }
-
-    int hackersID; maxArrayNum++;
-    int *preferredCourseTemp=(int*)malloc(sizeof(int)*maxArrayNum);
-    int *enemiesTemp=(int*)malloc(sizeof(int)*maxArrayNum);
-    int *friendsTemp=(int*)malloc(sizeof(int)*maxArrayNum);
-    if(!preferredCourseTemp||!enemiesTemp||!friendsTemp){
-        free(preferredCourseTemp);
-        free(friendsTemp);
-        free(enemiesTemp);
-        return NULL;//MALLOC FAIL
-    }
-
-    for (int i=0;i<lines/4;i++){
-        if(fscanf(hackers,"%d",&hackersID)!=1){
-            continue;
-        }
-
-        int courseNum=0, friendsNum=0, enemiesNum=0, strIndex=0;
-        char temp= (char)fgetc(hackers);
-
-        while (temp!='\n'){
-            while(temp!=' '&&temp!='\n'){
-                tempStr[strIndex++]=temp;
-                temp=(char)fgetc(hackers);
-            }
-            sscanf(tempStr,"%d",&preferredCourseTemp[courseNum++]);
-            strcpy(tempStr,"");
-            strIndex=0;
-        }
-
-        temp=(char)fgetc(hackers);
-
-        while (temp!='\n'){
-            while(temp!=' '&&temp!='\n'){
-                tempStr[strIndex++]=temp;
-                temp=(char)fgetc(hackers);
-            }
-
-            sscanf(tempStr,"%d",&friendsTemp[friendsNum++]);
-            strcpy(tempStr,"");
-            strIndex=0;
-        }
-        temp=(char)fgetc(hackers);
-
-        while (temp!='\n'){
-            while(temp!=' '&&temp!='\n'){
-                tempStr[strIndex++]=temp;
-                temp=(char)fgetc(hackers);
-            }
-            sscanf(tempStr,"%d",&enemiesTemp[enemiesNum++]);
-            strcpy(tempStr,"");
-            strIndex=0;
-        }
-
+    for (int i=0;i<linesNum/4;i++){
+        putNextWordToString(hackers,tempStr);
         hackerList[i]=(Hacker)malloc(sizeof(Hacker));
         if(!hackerList[i]){
             return NULL;//MALLOC FAIL;
         }
-
-        hackerList[i]->m_studentCard= findStudentByID(studentList,hackersID);
+        hackerList[i]->m_studentCard= findStudentByID(studentList, strtol(tempStr,&tempStr,10));
         if(!hackerList[i]->m_studentCard){
             return NULL;//couldn't find student;
         }
-
-        hackerList[i]->m_preferredCourses=(int*) malloc(sizeof (int )*(courseNum+1));
+        //parse line to courses:
+        putNextLineToString(hackers,tempStr);
+        hackerList[i]->m_preferredCourses= fillIntArrayFromStr(tempArray,tempStr);
         if(!hackerList[i]->m_preferredCourses){
             return NULL; //MALLOC FAIL
         }
-        copyIntArray(preferredCourseTemp,hackerList[i]->m_preferredCourses, courseNum);
-        hackerList[i]->m_preferredCourses[courseNum]=0;
+        resetIntArray(tempArray,maxArrayNum);
 
-        hackerList[i]->m_studentCard->m_friendsList=(int*) malloc(sizeof (int )*(friendsNum+1));
+        //parse line to friends:
+
+        putNextLineToString(hackers,tempStr);
+
+        hackerList[i]->m_studentCard->m_friendsList=fillIntArrayFromStr(tempArray,tempStr);
         if(!hackerList[i]->m_studentCard->m_friendsList){
             return NULL; //MALLOC FAIL
         }
-        hackerList[i]->m_studentCard->m_friendsList[friendsNum]=0;
-        copyIntArray(hackerList[i]->m_studentCard->m_friendsList,friendsTemp,friendsNum);
+        resetIntArray(tempArray,maxArrayNum);
 
-        hackerList[i]->m_studentCard->m_enemiesList=(int*) malloc(sizeof (int )*enemiesNum);
+        //parse line to enemies:
+        putNextLineToString(hackers,tempStr);
+        hackerList[i]->m_studentCard->m_enemiesList=fillIntArrayFromStr(tempArray,tempStr);
         if(!hackerList[i]->m_studentCard->m_enemiesList){
             return NULL; //MALLOC FAIL
         }
-        copyIntArray(hackerList[i]->m_studentCard->m_enemiesList,enemiesTemp,enemiesNum);
-        hackerList[i]->m_studentCard->m_enemiesList[enemiesNum]=0;
-
+        resetIntArray(tempArray,maxArrayNum);
     }
-    hackerList[lines/4 +1]=NULL;
-    *length=lines/4;
-    free(preferredCourseTemp);
-    free(friendsTemp);
-    free(enemiesTemp);
+    hackerList[linesNum/4]=NULL;
+    length[0]=linesNum/4;
     return hackerList;
-
-
-
 }
 
 //=========================================================
@@ -395,61 +304,6 @@ Student findStudentByID(Student *studentList, int ID){
         i++;
     }
     return NULL;
-}
-
-void copyIntArray(const int src[],int dest[], int length){
-    for (int i=0;i<length; i++){
-        dest[i]=src[i];
-    }
-}
-
-//returns file length and doesn't change the file ptr
-long int fileLength(FILE* file){
-    fseek(file,0,SEEK_END);
-    long int length=ftell(file);
-    fseek(file, 0, SEEK_SET);
-    return length;
-}
-
-//saves lines in file and maximum word length to ptr
-//resets file access point
-void examineFileLinesAndSize(FILE* file, int *lines, int *maxWordLength){
-    if(!file){
-        return; //BAD PARAM
-    }
-    int lineCounter=0,maxWord=0,tempMaxWord=1;
-    char tempC;
-    while ((tempC=(char)fgetc(file))!=EOF){
-        switch (tempC)
-        {
-        case ' ':
-            if (maxWord<tempMaxWord){
-                maxWord=tempMaxWord;
-            }
-            tempMaxWord=0;
-            break;
-        case '\n':
-            lineCounter++;
-            if (maxWord<tempMaxWord){
-                maxWord=tempMaxWord;
-            }
-            tempMaxWord=0;
-            break;
-        default:
-            tempMaxWord++;
-            break;
-        }
-    }
-    *lines=lineCounter;
-    *maxWordLength=maxWord;
-    fseek(file, 0, SEEK_SET);
-
-}
-
-int max(int a, int b){
-    if (a>b)
-        return a;
-    return b;
 }
 
 void swap(Student *studentA,Student *studentB){
@@ -495,7 +349,7 @@ int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB){
 }
 
 
-//func desc: ill let you know when I find out
+
 int friendshipByASCII(void* ptrStudentA, void* ptrStudentB){
     if(!ptrStudentA||!ptrStudentB){
         return 0;//BAD PARAM ??? TODO check return value
@@ -515,7 +369,7 @@ int friendshipByASCII(void* ptrStudentA, void* ptrStudentB){
 }
 
 
-//func desc: ill let you know when I find out
+
 int friendshipByIDDiff(void* ptrStudentA, void* ptrStudentB){
     if(!ptrStudentA||!ptrStudentB){
         return -1;//BAD PARAM
@@ -527,4 +381,29 @@ int friendshipByIDDiff(void* ptrStudentA, void* ptrStudentB){
         pow*=10;
     }
     return sum;
+}
+
+
+int putNextWordToString(FILE* file, char* str){
+    assert(file!=NULL&&str!=NULL);
+    int i=0;
+    char temp=(char)fgetc(file);
+    while (temp!=' '){
+        str[i++]=temp;
+        temp=(char)fgetc(file);
+    }
+    str[i]='\0';
+    return i+1;
+}
+
+int putNextLineToString(FILE* file, char* str){
+    assert(file!=NULL&&str!=NULL);
+    int i=0;
+    char temp=(char)fgetc(file);
+    while (temp!='\n'){
+        str[i++]=temp;
+        temp=(char)fgetc(file);
+    }
+    str[i]='\0';
+    return i+1;
 }
