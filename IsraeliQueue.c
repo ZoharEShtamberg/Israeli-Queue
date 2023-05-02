@@ -146,7 +146,7 @@ static IsraeliItem findFriend(IsraeliQueue queue, void* item){
  * @param front: node to insert behind
  * @note: ...-> front -> behind ->...
  * */
-void insertBehind(IsraeliItem behind, IsraeliItem front){
+static void insertBehind(IsraeliItem behind, IsraeliItem front){
 	assert(front!=NULL);
 	assert(behind!=NULL);
 	IsraeliItem temp = front->m_next;
@@ -156,12 +156,48 @@ void insertBehind(IsraeliItem behind, IsraeliItem front){
 
 /**@param head: head of israeli item linked list
  * frees allocated memory recursively.*/
-void destroyIsraeliList(IsraeliItem head){
+static void destroyIsraeliList(IsraeliItem head){
 	if(!head){
 		return;
 	}
 	destroyIsraeliList(head->m_next);
 	free(head);
+}
+/** copies all fields of 'source' into 'target', except 'm_next'.
+ * both ptrs should be valid. */
+static void copyIsraeliItem(IsraeliItem source, IsraeliItem target){
+	assert(source && target);
+	target->m_data=source->m_data;
+	target->m_friendsHelped=source->m_friendsHelped;
+	target->m_enemiesBlocked=source->m_enemiesBlocked;
+}
+/**@param source: head of linked israeli items.
+ * @return: head to a new israeli item list. NULL for error.
+ * calls it self recursively, allocating for each item.
+ * @note: should not receive NULL!
+ * */
+static IsraeliItem duplicateItemList(IsraeliItem source){
+	assert(source);
+	if(source->m_next==NULL){	//means its the last one
+		IsraeliItem last = malloc(sizeof(*last));
+		if(!last){
+			return NULL;
+		}
+		last->m_next = NULL;
+		copyIsraeliItem(source, last);
+		return last;
+	}
+	IsraeliItem curr = malloc(sizeof(*curr));
+	if(!curr){
+		return NULL;
+	}
+	curr->m_next = duplicateItemList(source->m_next);
+	if(curr->m_next == NULL){ //alloc failed down the line
+		free(curr);
+		return NULL;
+	}
+	copyIsraeliItem(source, curr);
+	return curr;
 }
 
 //=================================================================
@@ -324,5 +360,20 @@ bool IsraeliQueueContains(IsraeliQueue queue, void *data){
 /*clone function:*/
 //=================================================================
 IsraeliQueue IsraeliQueueClone(IsraeliQueue q){
-
+	IsraeliQueue clone = IsraeliQueueCreate(q->m_friendshipFunctionList,
+											q->m_comparisonFunction,
+											q->m_friendshipThreshold, q->m_rivalryThreshold);
+	if(!clone){
+		return NULL;	//'create' failed
+	}
+	if(q->m_head==NULL){
+		return clone;	//'copyitemlist' must not receive NULL!
+	}
+	IsraeliItem newHead = duplicateItemList(q->m_head);
+	if(!newHead){	//alloc error in copy item list
+		IsraeliQueueDestroy(clone);
+		return NULL;
+	}
+	clone->m_head = newHead;
+	return clone;
 }
