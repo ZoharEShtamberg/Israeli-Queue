@@ -2,7 +2,7 @@
 //#include <stdbool.h>
 #include <assert.h>
 #include <stdlib.h>
-#include "IsraeliQueue.h"
+#include "../IsraeliQueue.h"
 #include <string.h>
 #include "FileHelper.h"
 
@@ -54,6 +54,8 @@ Student *createStudentListFromFile(FILE* students, int *length);
 Course *createCourseListFromFile(FILE* courses, int *length);
 Hacker *createHackersListFromFile(FILE* hackers, int *length, Student *studentList,int maxArrayNum);
 Student findStudentByID(Student *studentList, int ID);
+Course findCourseByID(Course *courseList, int ID);
+Student createStudentFromLine(char* str,int maxWord);
 
 
 
@@ -128,7 +130,27 @@ EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
 /**Function Description:
  * 
  * */
-EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues);
+EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues){
+    if(!sys||!queues){
+        return NULL;//BAD PARAM
+    }
+    char* tempStr=(char*)malloc(sizeof(char)* getMaxWordInFile(queues+1));
+    if (!tempStr){
+        return NULL;//MALLOC FAIL
+    }
+    for (int i=0;i< getLineNumInFile(queues);i++){
+        putNextLineToString(queues,tempStr);
+        char *token= strtok(tempStr," ");
+        Course tempCourse=findCourseByID(sys->m_coursesList,atoi(token));
+        token= strtok(NULL," ");
+        while (token!=NULL){
+            Student tempStudent= findStudentByID(sys->m_studentsList,atoi(token));
+            IsraeliQueueEnqueue(tempCourse->m_queue,tempStudent);
+            token= strtok(NULL," ");
+        }
+    }
+    return sys;
+}
 
 /**Function Description:
  * 
@@ -151,55 +173,70 @@ int isTheSameStudent(void* stuA, void* stuB){
 //Inner Functions
 //=========================================================================
 //malloc notes: all objects and strings in object should be freed in destroy function
-Student *createStudentListFromFile(FILE* students, int *length){
-    assert(students!=NULL);
-    int maxNameSize= getMaxWordInFile(students), lines= getLineNumInFile(students);
-    char *tempWordStr=(char*) malloc(sizeof (char)*maxNameSize);
-    char *studentName=(char*) malloc(sizeof (char )*(maxNameSize*2+2));
-    Student *studentList=(Student*)malloc((sizeof(Student))*(lines+1));
-    if (!studentList||!tempWordStr||!studentName){
+Student *createStudentListFromFile(FILE* students, int *length) {
+    assert(students != NULL);
+    int maxNameSize = getMaxWordInFile(students), lines = getLineNumInFile(students);
+    char *tempStr = (char *) malloc(sizeof(char) * getMaxLineInFile(students));
+    if (!tempStr) {
         return NULL;//MALLOC FAIL
     }
-    for(int k=0;k<lines;k++){
-
-        studentList[k]=(Student)malloc(sizeof(Student));
-        if (studentList[k]){
-            return NULL;//MALLOC FAIL
-        }
-        for (int i=0;i<STUDENT_TXT_ARG;i++){
-            switch (i) {
-                case ID_INDEX:
-                    putNextWordToString(students, tempWordStr);
-                    studentList[i]->m_studentID=strtol(tempWordStr,&tempWordStr, 10);
-                    break;
-                case F_NAME_INDEX:
-                    putNextWordToString(students, tempWordStr);
-                    strcpy(studentName,tempWordStr);
-                    break;
-                case L_NAME_INDEX:
-                    putNextWordToString(students, tempWordStr);
-                    strcat(studentName, " ");
-                    strcat(studentName, tempWordStr);
-                    break;
-                default:
-                    putNextWordToString(students,tempWordStr);
-                    break;
-            }
-        }
-        studentList[k]->m_name= (char*)malloc(sizeof(char)*(strlen(studentName)));
-        if(!studentList[k]->m_name){
-            return NULL;// MALLOC FAIL
-        }
-        strcpy(studentList[k]->m_name,studentName);
-        strcat(studentList[k]->m_name," ");
-        studentList[k]->m_enemiesList=NULL;
-        studentList[k]->m_friendsList=NULL;
+    Student *studentList = (Student*) malloc((sizeof(Student)) * (lines + 1));
+    if (!studentList) {
+        return NULL;//MALLOC FAIL
     }
-    free(tempWordStr);
-    free(studentName);
-    length[0]=lines;
-    studentList[lines]=NULL;
+    for (int k = 0; k < lines; k++) {
+        putNextLineToString(students, tempStr);
+        studentList[k] = createStudentFromLine(tempStr, maxNameSize);
+        if (!studentList[k]) {
+            return NULL;
+        }
+    }
+    length[0] = lines;
+    studentList[lines] = NULL;
     return studentList;
+}
+
+
+Student createStudentFromLine(char *str, int maxWord){
+    Student newStudent=(Student)malloc(sizeof(Student));
+    if (!newStudent){
+        return NULL;//MALLOC FAIL
+    }
+    char* tempStr=(char*)malloc(sizeof(char)*(maxWord+1)*2);
+    if(!tempStr){
+        free (newStudent);
+        return NULL;
+    }
+    char *token= strtok(str, " ");
+
+    int i=0;
+    while(token!=NULL){
+        switch (i++) {
+            case ID_INDEX:
+                newStudent->m_studentID= (int)strtol(token,&token ,10);
+                break;
+            case F_NAME_INDEX:
+                strcpy(tempStr, token);
+                strcat(tempStr," ");
+                break;
+            case L_NAME_INDEX:
+                strcat(tempStr, token);
+                break;
+            default:
+                break;
+        }
+        token= strtok(NULL, " ");
+    }
+    newStudent->m_name= (char*)malloc(sizeof(char)*(strlen(tempStr)+1));
+    if(!newStudent->m_name){
+        return NULL;// MALLOC FAIL
+    }
+    strcpy(newStudent->m_name,tempStr);
+    free(tempStr);
+    newStudent->m_enemiesList=NULL;
+    newStudent->m_friendsList=NULL;
+
+    return newStudent;
 }
 
 
@@ -217,13 +254,15 @@ Course *createCourseListFromFile(FILE* courses, int *length){
             return NULL;//MALLOC FAIL
         }
         putNextWordToString(courses,tempStr);
-        courseList[i]->m_number= strtol(tempStr,&tempStr,10);
+        courseList[i]->m_number= atoi(tempStr);
         putNextWordToString(courses,tempStr);
-        courseList[i]->m_size= strtol(tempStr,&tempStr,10);
-        courseList[i]->m_queue= IsraeliQueueCreate(NULL,isTheSameStudent,FRIENDSHIP_THR,RIVALRY_THR);
-        if (!courseList[i]->m_queue){
-            return NULL;//CREATE FAIL
-        }
+        courseList[i]->m_size= atoi(tempStr);
+      //  courseList[i]->m_queue= IsraeliQueueCreate(NULL,isTheSameStudent,FRIENDSHIP_THR,RIVALRY_THR);
+       // if (!courseList[i]->m_queue){
+      //      return NULL;//CREATE FAIL
+      //  }
+        courseList[i]->m_queue=NULL;
+
     }
     courseList[lines]=NULL;
     free(tempStr);
@@ -292,6 +331,18 @@ Hacker *createHackersListFromFile(FILE* hackers, int *length,Student *studentLis
 //
 //finds student from list and returns struct pointer
 // if not found in list returns null
+Course findCourseByID(Course *courseList, int ID){
+    assert(courseList);
+    int i=0;
+    while(courseList[i]!=NULL){
+        if (courseList[i]->m_number==ID){
+            return courseList[i];
+        }
+        i++;
+
+    }
+    return NULL;
+}
 Student findStudentByID(Student *studentList, int ID){
     if(!studentList){
         return NULL;//BAD PARAM
@@ -381,29 +432,4 @@ int friendshipByIDDiff(void* ptrStudentA, void* ptrStudentB){
         pow*=10;
     }
     return sum;
-}
-
-
-int putNextWordToString(FILE* file, char* str){
-    assert(file!=NULL&&str!=NULL);
-    int i=0;
-    char temp=(char)fgetc(file);
-    while (temp!=' '){
-        str[i++]=temp;
-        temp=(char)fgetc(file);
-    }
-    str[i]='\0';
-    return i+1;
-}
-
-int putNextLineToString(FILE* file, char* str){
-    assert(file!=NULL&&str!=NULL);
-    int i=0;
-    char temp=(char)fgetc(file);
-    while (temp!='\n'){
-        str[i++]=temp;
-        temp=(char)fgetc(file);
-    }
-    str[i]='\0';
-    return i+1;
 }
