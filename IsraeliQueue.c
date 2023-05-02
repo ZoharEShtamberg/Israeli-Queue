@@ -291,3 +291,12 @@ IsraeliQueueError IsraeliQueueUpdateRivalryThreshold(IsraeliQueue queue, int thr
 	queue->m_rivalryThreshold=threshold;
 	return ISRAELIQUEUE_SUCCESS;
 }
+/**@param queue:queue
+ * @note: it counts them.*/
+int IsraeliQueueSize(IsraeliQueue queue){
+	int size = 0;
+	for(IsraeliItem head = queue->m_head ; head ; head=head->m_next){
+		size++;
+	}
+	return size;
+}
