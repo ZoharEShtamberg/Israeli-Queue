@@ -37,7 +37,7 @@ typedef struct IsraeliItem_t{
 /*function declarations*/
 //=================================================================
 static FriendshipFunction* duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In);
-static void destroyLinkedList(IsraeliItem list);
+static void destroyIsraeliList(IsraeliItem head);
 static bool areFriends(void* itemA, void* itemB,IsraeliQueue queue);
 static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue);
 static IsraeliItem findFriend(IsraeliQueue queue, void* item);
@@ -160,7 +160,7 @@ void destroyIsraeliList(IsraeliItem head){
 	if(!head){
 		return;
 	}
-	destroyLinkedList(head->m_next);
+	destroyIsraeliList(head->m_next);
 	free(head);
 }
 
@@ -228,12 +228,43 @@ void IsraeliQueueDestroy(IsraeliQueue queue){
 	destroyIsraeliList(queue->m_head);		//destroy israeli items in queue
 	free(queue);		//destroy queue struct
 }
-
-
+//=================================================================
+/*dequeue function:*/
+//=================================================================
+/**@param queue: queue
+ * @return: ptr to data.
+ * frees items memory.*/
 void* IsraeliQueueDequeue(IsraeliQueue queue){
 	IsraeliItem head = queue->m_head;
 	void* data = head->m_data;
 	queue->m_head=head->m_next;
 	free(head);
 	return data;
+}
+//=================================================================
+/*add friendship function:*/
+//=================================================================
+IsraeliQueueError IsraeliQueueAddFriendshipMeasure(IsraeliQueue queue, FriendshipFunction newFunction){
+	if(!queue||!newFunction){
+		return ISRAELIQUEUE_BAD_PARAM
+	}
+	int funcNum = 0;
+	FriendshipFunction* list = queue->m_friendshipFunctionList;
+	for(; *list; list++){
+		funcNum++;
+	}
+	list=queue->m_friendshipFunctionList;
+	FriendshipFunction *newList = malloc((funcNum+2) * sizeof(FriendshipFunction));
+	if(!newList){
+		return ISRAELIQUEUE_ALLOC_FAILED;
+	}
+	int i=0;
+	for(;i<funcNum;i++){
+		newList[i]=list[i];
+	}
+	newList[i++]=newFunction;
+	newList[i]=NULL;
+	queue->m_friendshipFunctionList = newList;
+	free(list);
+	return ISRAELIQUEUE_SUCCESS;
 }
