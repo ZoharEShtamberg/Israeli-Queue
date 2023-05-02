@@ -249,7 +249,7 @@ void* IsraeliQueueDequeue(IsraeliQueue queue){
  * */
 IsraeliQueueError IsraeliQueueAddFriendshipMeasure(IsraeliQueue queue, FriendshipFunction newFunction){
 	if(!queue||!newFunction){
-		return ISRAELIQUEUE_BAD_PARAM
+		return ISRAELIQUEUE_BAD_PARAM;
 	}
 	int funcNum = 0;
 	FriendshipFunction* list = queue->m_friendshipFunctionList;
@@ -307,7 +307,7 @@ int IsraeliQueueSize(IsraeliQueue queue){
 /*search function:*/
 //=================================================================
 /**@param queue: queue
- * @param data: ptr to data to serch for in line*/
+ * @param data: ptr to data to search for in line*/
 bool IsraeliQueueContains(IsraeliQueue queue, void *data){
 	if(!queue){
 		return false;
