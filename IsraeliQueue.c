@@ -291,6 +291,9 @@ IsraeliQueueError IsraeliQueueUpdateRivalryThreshold(IsraeliQueue queue, int thr
 	queue->m_rivalryThreshold=threshold;
 	return ISRAELIQUEUE_SUCCESS;
 }
+//=================================================================
+/*queue size function:*/
+//=================================================================
 /**@param queue:queue
  * @note: it counts them.*/
 int IsraeliQueueSize(IsraeliQueue queue){
@@ -299,4 +302,21 @@ int IsraeliQueueSize(IsraeliQueue queue){
 		size++;
 	}
 	return size;
+}
+//=================================================================
+/*search function:*/
+//=================================================================
+/**@param queue: queue
+ * @param data: ptr to data to serch for in line*/
+bool IsraeliQueueContains(IsraeliQueue queue, void *data){
+	if(!queue){
+		return false;
+	}
+	ComparisonFunction compare = queue->m_comparisonFunction;
+	for(IsraeliItem head = queue->m_head ; head ; head=head->m_next){
+		if(compare(data, head->m_data)){
+			return true;
+		}
+	}
+	return false;
 }
