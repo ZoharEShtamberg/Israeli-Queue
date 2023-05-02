@@ -320,3 +320,9 @@ bool IsraeliQueueContains(IsraeliQueue queue, void *data){
 	}
 	return false;
 }
+//=================================================================
+/*clone function:*/
+//=================================================================
+IsraeliQueue IsraeliQueueClone(IsraeliQueue q){
+
+}
