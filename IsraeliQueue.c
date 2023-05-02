@@ -244,6 +244,9 @@ void* IsraeliQueueDequeue(IsraeliQueue queue){
 //=================================================================
 /*add friendship function:*/
 //=================================================================
+/**@param queue: queue
+ * @param newFunction: ptr to a friendship function to add to the queue
+ * */
 IsraeliQueueError IsraeliQueueAddFriendshipMeasure(IsraeliQueue queue, FriendshipFunction newFunction){
 	if(!queue||!newFunction){
 		return ISRAELIQUEUE_BAD_PARAM
@@ -266,5 +269,25 @@ IsraeliQueueError IsraeliQueueAddFriendshipMeasure(IsraeliQueue queue, Friendshi
 	newList[i]=NULL;
 	queue->m_friendshipFunctionList = newList;
 	free(list);
+	return ISRAELIQUEUE_SUCCESS;
+}
+//=================================================================
+/*threshold update functions:*/
+//=================================================================
+
+/**pretty straight forward these two*/
+IsraeliQueueError IsraeliQueueUpdateFriendshipThreshold(IsraeliQueue queue, int threshold){
+	if(!queue){
+		return ISRAELIQUEUE_BAD_PARAM;
+	}
+	queue->m_friendshipThreshold=threshold;
+	return ISRAELIQUEUE_SUCCESS;
+}
+
+IsraeliQueueError IsraeliQueueUpdateRivalryThreshold(IsraeliQueue queue, int threshold){
+	if(!queue){
+		return ISRAELIQUEUE_BAD_PARAM;
+	}
+	queue->m_rivalryThreshold=threshold;
 	return ISRAELIQUEUE_SUCCESS;
 }
