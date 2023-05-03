@@ -4,7 +4,6 @@
 
 #include <stdio.h>
 #include <stdbool.h>
-//#include "IsraeliQueue.h" //this should not be here. zohar.
 
 
 typedef struct EnrollmentSystem_t *EnrollmentSystem;
@@ -13,34 +12,30 @@ typedef struct Hacker_t *Hacker;
 typedef struct Course_t *Course;
 
 
-typedef enum { HACKER_ENROLLMENT_SUCCESS, HACKER_ENROLLMENT_ALLOC_FAILED, HACKER_ENROLLMENT_BAD_PARAM, HACKER_ENROLLMENT_ERROR } HackerEnrollmentError;
 
-/**Error clarification:
- * HACKER_ENROLLMENT_SUCCESS: Indicates the function has completed its task successfully with no errors.
- * HACKER_ENROLLMENT_ALLOC_FAILED: Indicates memory allocation failed during the execution of the function.
- * HACKER_ENROLLMENT_BAD_PARAM: Indicates an illegal parameter was passed.
- * HACKER_ENROLLMENT_ERROR: Indicates any error beyond the above.
- * */
-
-/**Creates a new Enrollment system based on the files provided, files should be
- * according to to following structure:
- * @param students: <Student ID> <Total Credits> <GPA> <Name> <Surname> <City> <Department>\n
- * @param courses: <Course Number> <size>\n
- * @param hackers: <Student ID>\n <Course Number>\n <Student ID>\n (friends) <Student ID>\n (rivals)
+/**Creates a new Enrollment system based on the files provided,
+ * ALL files are expected to be formatted correctly!
  * 
- * 
- * returns a pointer
+ * FriendshipFunction array is initialized to null.
+ * returns a pointer to the function-memory must be freed by destroyEnrollment
+ * in case of failure returns null-memory handled in function
+ *
  * */
 EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers);
 
-/**Function Description:
- * 
+/**Reads Enrollment queues and updates the relevant m_coursesList item accordingly
+ * @param queues: <course number> <ID>...<ID>\n
+ *
+ * CAUTION: in case of error returns NULL, USER  is responsible to BACK UP original system pointer!!!
+ *
  * */
 EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues);
 
 
-/**Function Description:
- * 
+/**Updates all queues to IsraeliQueues
+ * assumes sys and file parameters are all correct!
+ *
+ * in cade of error prints out "help!!"
  * */
 void hackEnrollment(EnrollmentSystem sys, FILE* out);
 

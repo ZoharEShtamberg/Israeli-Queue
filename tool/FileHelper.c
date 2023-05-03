@@ -3,6 +3,7 @@
 //
 
 #include "FileHelper.h"
+#include <assert.h>
 
 
 void copyIntArray(const int src[],int dest[], int length){
@@ -20,7 +21,7 @@ long int fileLength(FILE* file){
 }
 
 //saves lines in file and maximum word length to ptr
-//resets file access point
+//resets FAP to set
 int getMaxLineInFile(FILE* file){
     if(!file){
         return -1; //BAD PARAM
@@ -83,7 +84,10 @@ int getLineNumInFile(FILE* file){
 
 }
 
-
+//creates new dynamically allocated array of int based on a string
+//@PARAM:str- string of numbers divided by " "
+//arr: a temp array with the max size of the input
+//the returned array is of size n+1 where n is the number of numbers and arr[n]=-1
 int *fillIntArrayFromStr(int *arr, char* str){
     int i=0;
     while(str[0]!='\0'){
@@ -108,3 +112,28 @@ int max(int a, int b){
     return b;
 }
 
+
+
+int putNextWordToString(FILE* file, char* str){
+    assert(file!=NULL&&str!=NULL);
+    int i=0;
+    char temp=(char)fgetc(file);
+    while (temp!=' '&&temp!='\n'){
+        str[i++]=temp;
+        temp=(char)fgetc(file);
+    }
+    str[i]='\0';
+    return i+1;
+}
+
+int putNextLineToString(FILE* file, char* str){
+    assert(file!=NULL&&str!=NULL);
+    int i=0;
+    char temp=(char)fgetc(file);
+    while (temp!='\n'){
+        str[i++]=temp;
+        temp=(char)fgetc(file);
+    }
+    str[i]='\0';
+    return i+1;
+}
