@@ -3,7 +3,6 @@
 //
 #include <stdlib.h>
 #include <math.h>
-#include <stdio.h>
 #include <assert.h>
 #include "IsraeliQueue.h"
 
@@ -50,6 +49,7 @@ static void insertBehind(IsraeliItem behind, IsraeliItem front);
  * note: memory should be freed when destroying the israeli queue
  * */
 static FriendshipFunction* duplicateFuncArray(FriendshipFunction *friendshipFunctionList_In){
+	assert(friendshipFunctionList_In);
 	int size = 0;
 	FriendshipFunction* temp =friendshipFunctionList_In;
 	for(;*temp;temp++){
@@ -214,7 +214,7 @@ static IsraeliItem duplicateItemList(IsraeliItem source){
 IsraeliQueue IsraeliQueueCreate(FriendshipFunction *friendshipFunctionList_In, ComparisonFunction comparisonFunction,
 								int friendship_th, int rivalry_th){
 
-	if(!comparisonFunction){
+	if(!comparisonFunction||!friendshipFunctionList_In){
 		return NULL; //bad parameter
 	}
 
@@ -376,4 +376,36 @@ IsraeliQueue IsraeliQueueClone(IsraeliQueue q){
 	}
 	clone->m_head = newHead;
 	return clone;
+}
+//=================================================================
+/*improve positions function:*/
+//=================================================================
+IsraeliQueueError IsraeliQueueImprovePositions(IsraeliQueue queue){
+	if(!queue){
+		return ISRAELIQUEUE_BAD_PARAM;
+	}
+	int size = IsraeliQueueSize(queue);
+	if(size<2){
+		return ISRAELIQUEUE_SUCCESS;
+	}
+	IsraeliItem *list = malloc(size*sizeof(IsraeliItem)); //note: sizeof the ptr itself.
+	if(!list){
+		return ISRAELIQUEUE_ALLOC_FAILED;
+	}
+	IsraeliItem head=queue->m_head;
+	for(int i=0;i<size;i++){
+		assert(head);
+		list[i]=head;
+		head=head->m_next;
+	}
+	for(int i=size;i>1;i--){	//not including the first one
+		list[i-1]->m_next = list[i]->m_next;
+		IsraeliItem friend = findFriend(queue, list[i]->m_data);
+		insertBehind(friend, list[i]);
+	}
+	queue->m_head = list[0]->m_next;	//after trying to improve the 1st item in line, the one after it is the new head
+	IsraeliItem friend = findFriend(queue, list[0]->m_data);
+	insertBehind(friend, list[0]);
+	free(list);
+	return ISRAELIQUEUE_SUCCESS;
 }
