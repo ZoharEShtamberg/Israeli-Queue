@@ -268,7 +268,7 @@ void IsraeliQueueDestroy(IsraeliQueue queue){
 /*dequeue function:*/
 //=================================================================
 /**@param queue: queue
- * @return: ptr to data.
+ * @return: ptr to data or NULL for empty queue
  * frees items memory.*/
 void* IsraeliQueueDequeue(IsraeliQueue queue){
 	IsraeliItem head = queue->m_head;
@@ -377,6 +377,8 @@ IsraeliQueue IsraeliQueueClone(IsraeliQueue q){
 	clone->m_head = newHead;
 	return clone;
 }
+/**@param queue: israeli queue
+ * i really hope this is what they meant, but at this point who knows?*/
 //=================================================================
 /*improve positions function:*/
 //=================================================================
@@ -408,4 +410,24 @@ IsraeliQueueError IsraeliQueueImprovePositions(IsraeliQueue queue){
 	insertBehind(friend, list[0]);
 	free(list);
 	return ISRAELIQUEUE_SUCCESS;
+}
+//=================================================================
+/*merge function:*/
+//=================================================================
+IsraeliQueue IsraeliQueueMerge(IsraeliQueue* queueList_In ,ComparisonFunction comparefunction){
+	if(!queueList_In||!comparefunction){
+		return NULL;	//bad parameters
+	}
+	unsigned int size = 0;
+	while(queueList_In[size]){
+		size++;
+	}
+	IsraeliQueue *newList = malloc(size*sizeof(IsraeliQueue));	//array of ptrs
+	if(!newList){
+		return NULL;	//alloc fail
+	}
+	for(int i=0;i<size;i++){
+		newList[i] = IsraeliQueueClone(queueList_In[i]);
+	}
+
 }
