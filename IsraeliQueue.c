@@ -200,6 +200,19 @@ static IsraeliItem duplicateItemList(IsraeliItem source){
 	return curr;
 }
 
+static IsraeliQueueError addFriendshipFunctionsFromList(IsraeliQueue *queueList, IsraeliQueue queue, const unsigned int length){
+	for(int i=0;i<length;i++){
+		FriendshipFunction *currList= queueList[i]->m_friendshipFunctionList;
+		while(*currList){
+			if(IsraeliQueueAddFriendshipMeasure(queue, *currList)!=ISRAELIQUEUE_SUCCESS){
+				return ISRAELI_QUEUE_ERROR;
+			}
+			currList++;
+		}
+	}
+	return ISRAELIQUEUE_SUCCESS;
+}
+
 //=================================================================
 /*create function:*/
 //=================================================================
@@ -414,20 +427,44 @@ IsraeliQueueError IsraeliQueueImprovePositions(IsraeliQueue queue){
 //=================================================================
 /*merge function:*/
 //=================================================================
-IsraeliQueue IsraeliQueueMerge(IsraeliQueue* queueList_In ,ComparisonFunction comparefunction){
-	if(!queueList_In||!comparefunction){
+IsraeliQueue IsraeliQueueMerge(IsraeliQueue* queueList , ComparisonFunction compareFunction){
+	if(!queueList || !compareFunction || !queueList[0]){
 		return NULL;	//bad parameters
 	}
-	unsigned int size = 0;
-	while(queueList_In[size]){
-		size++;
-	}
-	IsraeliQueue *newList = malloc(size*sizeof(IsraeliQueue));	//array of ptrs
-	if(!newList){
-		return NULL;	//alloc fail
-	}
-	for(int i=0;i<size;i++){
-		newList[i] = IsraeliQueueClone(queueList_In[i]);
-	}
+	unsigned int queuesNum=0, maxSize=0;
+	double rivalryMultiply=1, friendSum=0;
 
+	for(  ;queueList[queuesNum];queuesNum++) {
+		rivalryMultiply *= queueList[queuesNum]->m_rivalryThreshold;
+		friendSum += queueList[queuesNum]->m_friendshipThreshold;
+		int currSize = IsraeliQueueSize(queueList[queuesNum]);
+		if(currSize>maxSize){
+			maxSize=currSize;
+		}
+	}
+	assert(queuesNum);	//already checked but i wanna be sure
+	int rivalryThreshold = ceil(pow(rivalryMultiply, 1/queuesNum));
+	int friendshipThreshold = ceil(friendSum/queuesNum);
+
+	FriendshipFunction arr[1] = {NULL};	//we need to give em something
+	
+	IsraeliQueue newQ = IsraeliQueueCreate(arr, compareFunction,
+										   friendshipThreshold, rivalryThreshold);
+	if(addFriendshipFunctionsFromList(queueList, newQ, queuesNum) != ISRAELIQUEUE_SUCCESS){
+		IsraeliQueueDestroy(newQ);
+		return NULL;
+	}
+	for(int i=0;i<maxSize;i++){
+		for(int j=0;j<queuesNum;j++){
+			if(queueList[j]->m_head==NULL){
+				continue;
+			}
+			IsraeliQueueError flag=IsraeliQueueEnqueue(newQ, IsraeliQueueDequeue(queueList[j]));
+			if(flag!=ISRAELIQUEUE_SUCCESS){
+				IsraeliQueueDestroy(newQ);
+				return NULL;	//error in enqueue
+			}
+		}
+	}
+	return newQ;
 }
