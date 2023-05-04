@@ -32,6 +32,7 @@ typedef struct Student_t{
 
 typedef struct Hacker_t{
     int  *m_preferredCourses;
+    int m_preferredCoursesSize;
     Student m_studentCard;
 
 } *Hacker;
@@ -52,9 +53,13 @@ typedef struct EnrollmentSystem_t{
 Student *createStudentListFromFile(FILE* students, int *length);
 Course *createCourseListFromFile(FILE* courses, int *lengthconst,const FriendshipFunction *functionArray);
 Hacker *createHackersListFromFile(FILE* hackers, int *length, const Student *studentList,int maxArrayNum);
-Student findStudentByID(Student *studentList, int ID);
+Student findStudentByID(const Student *studentList, int ID);
 Course findCourseByID(Course *courseList, int ID);
 Student createStudentFromLine(char* str,int maxWord);
+void insertHackersToQueues(EnrollmentSystem sys);
+Student areAllHackersSatisfied(EnrollmentSystem sys);
+void printQueuesToFile(EnrollmentSystem sys, FILE* outFile);
+
 
 
 
@@ -179,7 +184,17 @@ EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues){
  * 
  * */
 void hackEnrollment(EnrollmentSystem sys, FILE* out){
-
+    if (!sys||!out){
+        return;//BAD PARAM
+    }
+    insertHackersToQueues(sys);
+    Student firstHackerUnsatisfied= areAllHackersSatisfied(sys);
+    if(!firstHackerUnsatisfied){
+        fprintf(out, "Cannot satisfy constraints for %d\n",firstHackerUnsatisfied->m_studentID);
+        return;
+    }
+    printQueuesToFile(sys, out);
+    return;
     }
 
 /**Function Description:
@@ -198,6 +213,48 @@ int isTheSameStudent(void* stuA, void* stuB){
 //Inner Functions
 //=========================================================================
 //malloc notes: all objects and strings in object should be freed in destroy function
+
+
+//This function recieves an enrollment system and checks if hackers are in
+// correct place in course queue
+//When the function finds an unsatisfied hacker it returns its Student Object pointer,
+//if all hackers are satisfied it returns NULL
+//
+Student areAllHackersSatisfied(EnrollmentSystem sys){
+    assert(sys);
+    for (int i=0; i<sys->m_hackersNum;i++){
+        int failCount=0;
+        for (int k=0;k<sys->m_hackersList[i]->m_preferredCoursesSize;i++){
+            Course tempCourse= findCourseByID(sys, sys->m_hackersList[i]->m_preferredCourses[k]);
+            assert(tempCourse);
+            IsraeliQueue tempQueue= IsraeliQueueClone(tempCourse->m_queue);
+            assert(tempQueue);
+            Student tempStudent= IsraeliQueueDequeue(tempQueue);
+            int queueIndex=0;
+            bool foundFlag=false;
+
+            while(tempStudent){
+                queueIndex++;
+                if(tempStudent->m_studentID==sys->m_hackersList[i]->m_studentCard->m_studentID){
+                    foundFlag=true;
+
+                    break;
+                }
+                tempStudent= IsraeliQueueDequeue(tempQueue);
+            }
+            assert(foundFlag);
+            if(queueIndex>tempCourse->m_size){
+                failCount++;
+            }
+            IsraeliQueueDestroy(tempQueue);
+        }
+        if(failCount>2||(failCount==sys->m_hackersList[i]->m_preferredCoursesSize==1))
+            return sys->m_hackersList[i]->m_studentCard;
+    }
+    return NULL;
+
+
+}
 Student *createStudentListFromFile(FILE* students, int *length) {
     assert(students != NULL);
     int maxNameSize = getMaxWordInFile(students), lines = getLineNumInFile(students);
@@ -368,7 +425,7 @@ Course findCourseByID(Course *courseList, int ID){
     }
     return NULL;
 }
-Student findStudentByID(Student *studentList, int ID){
+Student findStudentByID(const Student *studentList, int ID){
     if(!studentList){
         return NULL;//BAD PARAM
     }
