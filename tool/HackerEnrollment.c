@@ -493,10 +493,7 @@ Hacker *createHackersListFromFile(FILE* hackers, int *length, const Student *stu
         }
         resetIntArray(tempArray,maxArrayNum);
 
-        //parse line to friends:
-
         putNextLineToString(hackers,tempStr);
-
         hackerList[i]->m_studentCard->m_friendsList=fillIntArrayFromStr(tempArray,tempStr);
         if(!hackerList[i]->m_studentCard->m_friendsList){
             return NULL; //MALLOC FAIL
