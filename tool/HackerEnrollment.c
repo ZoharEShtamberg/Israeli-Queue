@@ -14,37 +14,39 @@
 #define RIVALRY_THR (-20)
 #define FRIENDSHIP_THR 20
 #define AMOUNT_OF_FF 3
+
+#define MIN(A, B) ((A)<=(B)) ? (A) : (B)
 //=================================================================
 /*typedefs & struct declaration*/
 //=================================================================
 
 
-typedef struct Course_t{
+struct Course_t{
     int m_number, m_size;
     IsraeliQueue m_queue;
-}*Course;
+};
 
-typedef struct Student_t{
+struct Student_t{
     char m_studentID[10];
     char *m_name;
     int *m_friendsList, *m_enemiesList;
-} *Student;
+};
 
-typedef struct Hacker_t{
+struct Hacker_t{
     int  *m_preferredCourses;
     int m_preferredCoursesSize;
     Student m_studentCard;
 
-} *Hacker;
+};
 
-typedef struct EnrollmentSystem_t{
+struct EnrollmentSystem_t{
     Student *m_studentsList;
     Hacker  *m_hackersList;
     Course *m_coursesList;
     int m_studentsNum, m_coursesNum, m_hackersNum;
     //int **m_queues;
     FriendshipFunction *m_functionArray;
-} *EnrollmentSystem;
+};
 
 //=================================================================================
 //Inner Functions Declarations:
@@ -324,8 +326,9 @@ Student areAllHackersSatisfied(EnrollmentSystem sys){
             }
             IsraeliQueueDestroy(tempQueue);
         }
-        if(failCount>2||(failCount==sys->m_hackersList[i]->m_preferredCoursesSize==1))
+        if(failCount > MIN(2, sys->m_hackersList[i]->m_preferredCoursesSize)){
             return sys->m_hackersList[i]->m_studentCard;
+        }    
     }
     return NULL;
 }
