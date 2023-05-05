@@ -8,7 +8,7 @@
 
 int main(int argc, char** argv){
 	if(argc<6 || argc>7){
-		return -0;//incorrect usage!
+		return 0;//incorrect usage!
 	}
 	bool ignoreUpperFlag = (strcmp(argv[1], "-i")) ? false: true; //inverse of strcmp
 	int i=(ignoreUpperFlag) ? 2 : 1;

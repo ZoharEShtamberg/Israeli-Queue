@@ -178,7 +178,7 @@ static void copyIsraeliItem(IsraeliItem source, IsraeliItem target){
  * */
 static IsraeliItem duplicateItemList(IsraeliItem source){
 	assert(source);
-	if(source->m_next==NULL){	//means its the last one
+	if(source->m_next==NULL){	//means it's the last one
 		IsraeliItem last = malloc(sizeof(*last));
 		if(!last){
 			return NULL;

@@ -2,7 +2,7 @@
 //#include <stdbool.h>
 #include <assert.h>
 #include <stdlib.h>
-#include "../IsraeliQueue.h"
+#include "IsraeliQueue.h"
 #include <string.h>
 #include "FileHelper.h"
 
