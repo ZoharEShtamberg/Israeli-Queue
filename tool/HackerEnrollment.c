@@ -7,8 +7,9 @@
 #include "../IsraeliQueue.h"
 
 
-#define ID_LENGTH 10
+
 #define ID_INDEX 0
+#define ID_LENGTH 9
 #define F_NAME_INDEX 3
 #define L_NAME_INDEX 4
 #define RIVALRY_THR (-20)
@@ -27,7 +28,7 @@ struct Course_t{
 };
 
 struct Student_t{
-    char m_studentID[10];
+    int m_studentID;
     char *m_name;
     int *m_friendsList, *m_enemiesList;
 };
@@ -86,34 +87,48 @@ void destroyEnrollment(EnrollmentSystem sys){
     }
     if (sys->m_studentsList){
         for (int i=0;i<sys->m_studentsNum;i++){
-            free(sys->m_studentsList[i]->m_name);
-            free(sys->m_studentsList[i]->m_friendsList);
-            free(sys->m_studentsList[i]->m_enemiesList);
-            free(sys->m_studentsList[i]);
+            if(sys->m_studentsList[i]){
+                free(sys->m_studentsList[i]->m_name);
+                free(sys->m_studentsList[i]->m_friendsList);
+                free(sys->m_studentsList[i]->m_enemiesList);
+                free(sys->m_studentsList[i]);
+            }
+
         }
+        free(sys->m_studentsList);
     }
-    free(sys->m_studentsList);
+
 
     if(sys->m_coursesList){
         for(int i=0; i<sys->m_coursesNum;i++){
             IsraeliQueueDestroy(sys->m_coursesList[i]->m_queue);
             free(sys->m_coursesList[i]);
         }
+        free(sys->m_coursesList);
     }
-    free(sys->m_coursesList);
+
 
     if(sys->m_hackersList){
         for(int i=0;i<sys->m_hackersNum;i++){
-            free(sys->m_hackersList[i]->m_preferredCourses);
-            free(sys->m_hackersList[i]);
+            if(sys->m_hackersList[i]){
+                free(sys->m_hackersList[i]->m_preferredCourses);
+                free(sys->m_hackersList[i]);
+            }
+
         }
         free(sys->m_hackersList);
     }
 
     if(sys->m_coursesList){
         for (int i=0; i<sys->m_coursesNum; i++){
-            IsraeliQueueDestroy(sys->m_coursesList[i]->m_queue);
+            if(sys->m_coursesList[i]){
+                if(sys->m_coursesList[i]->m_queue){
+                    IsraeliQueueDestroy(sys->m_coursesList[i]->m_queue);
+                }
+                free(sys->m_coursesList[i]);
+            }
         }
+        free(sys->m_coursesList);
     }
 
     free(sys->m_functionArray);
@@ -136,12 +151,14 @@ EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
     if (!newSys){
         return NULL;//MALLOC FAIL
     }
+    int counter=0;
 
-    newSys->m_studentsList= createStudentListFromFile(students,&(newSys->m_studentsNum));
+    newSys->m_studentsList= createStudentListFromFile(students,&counter);
     if(!newSys->m_studentsList){
         destroyEnrollment(newSys);
         return NULL;//MALLOC FAIL
     }
+   newSys->m_studentsNum=counter;
     newSys->m_functionArray= (FriendshipFunction *)malloc(sizeof (FriendshipFunction)*AMOUNT_OF_FF);
     if(!newSys->m_functionArray){
         destroyEnrollment(newSys);
@@ -150,8 +167,8 @@ EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
     for(int i =0;i<AMOUNT_OF_FF;i++){
         newSys->m_functionArray[i]=NULL;
     }
-    newSys->m_coursesList= createCourseListFromFile(courses,&(newSys->m_coursesNum), newSys->m_functionArray);
-    if(!newSys->m_studentsList||!newSys->m_coursesList){
+    newSys->m_coursesList= createCourseListFromFile(courses,&newSys->m_coursesNum, newSys->m_functionArray);
+    if(!newSys->m_coursesList){
         destroyEnrollment(newSys);
         return NULL;//CREATE FAIL
     }
@@ -177,10 +194,10 @@ EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues){
     for (int i=0;i< getLineNumInFile(queues);i++){
         putNextLineToString(queues,tempStr);
         char *token= strtok(tempStr," ");
-        Course tempCourse=findCourseByID(sys->m_coursesList,atoi(token));
+        Course tempCourse=findCourseByID(sys->m_coursesList,(int)strtod(token,&token));
         token= strtok(NULL," ");
         while (token!=NULL){
-            Student tempStudent= findStudentByID(sys->m_studentsList,atoi(token));
+            Student tempStudent= findStudentByID(sys->m_studentsList,(int)strtod(token,&token));
             IsraeliQueueEnqueue(tempCourse->m_queue,tempStudent);
             token= strtok(NULL," ");
         }
@@ -199,7 +216,7 @@ void hackEnrollment(EnrollmentSystem sys, FILE* out){
     insertHackersToQueues(sys);
     Student firstHackerUnsatisfied= areAllHackersSatisfied(sys);
     if(firstHackerUnsatisfied){
-        fprintf(out, "Cannot satisfy constraints for %s\n",firstHackerUnsatisfied->m_studentID);
+        fprintf(out, "Cannot satisfy constraints for %*d\n",ID_LENGTH,firstHackerUnsatisfied->m_studentID);
         return;
     }
     printQueuesToFile(sys, out);
@@ -210,7 +227,7 @@ void hackEnrollment(EnrollmentSystem sys, FILE* out){
  * */
 int isTheSameStudent(void* stuA, void* stuB){
     Student student1=(Student)stuA, student2=(Student)stuB;
-    if(!strcmp(student1->m_studentID,student2->m_studentID)){
+    if(student1->m_studentID==student2->m_studentID){
         return 1;
     }
     return 0;
@@ -254,7 +271,7 @@ void printQueuesToFile(EnrollmentSystem sys, FILE* outFile){
         fprintf(outFile,"%d", sys->m_coursesList[i]->m_number);
         Student tempStudent= IsraeliQueueDequeue(tempQueue);
         while(tempStudent){
-            fprintf(outFile, " %s",tempStudent->m_studentID);
+            fprintf(outFile, " %*d",ID_LENGTH, tempStudent->m_studentID);
             tempStudent= IsraeliQueueDequeue(tempQueue);
         }
         fprintf(outFile, "\n");
@@ -362,6 +379,7 @@ Student *createStudentListFromFile(FILE* students, int *length) {
         }
     }
 
+    free(tempStr);
     studentList[lines] = NULL;
     return studentList;
 }
@@ -379,18 +397,19 @@ Student createStudentFromLine(char *str, int maxWord){
     if (!newStudent){
         return NULL;//MALLOC FAIL
     }
+
     char* tempStr=(char*)malloc(sizeof(char)*(maxWord+1)*2);
     if(!tempStr){
         free (newStudent);
         return NULL;
     }
-    char *token= strtok(str, " ");
-
+    char *token=(char*) malloc(sizeof(char)*(maxWord+1)+1 );
+    token=strtok(str, " ");
     int i=0;
     while(token!=NULL){
         switch (i++) {
             case ID_INDEX:
-                strcpy(newStudent->m_studentID,token);
+                newStudent->m_studentID= (int)strtod(token, &token);
                 break;
             case F_NAME_INDEX:
                 strcpy(tempStr, token);
@@ -404,14 +423,15 @@ Student createStudentFromLine(char *str, int maxWord){
         }
         token= strtok(NULL, " ");
     }
-    newStudent->m_name= (char*)malloc(sizeof(char)*(strlen(tempStr)+1));
+    newStudent->m_name= (char*)malloc(sizeof(char)*(strlen(tempStr)+2));
     if(!newStudent->m_name){
         return NULL;// MALLOC FAIL
     }
     strcpy(newStudent->m_name,tempStr);
-    free(tempStr);
     newStudent->m_enemiesList=NULL;
     newStudent->m_friendsList=NULL;
+    free(token);
+    free(tempStr);
 
     return newStudent;
 }
@@ -439,9 +459,9 @@ Course *createCourseListFromFile(FILE* courses, int *length, FriendshipFunction 
             return NULL;//MALLOC FAIL
         }
         putNextWordToString(courses,tempStr);
-        courseList[i]->m_number= atoi(tempStr);
+        courseList[i]->m_number= (int)strtod(tempStr,&tempStr);
         putNextWordToString(courses,tempStr);
-        courseList[i]->m_size= atoi(tempStr);
+        courseList[i]->m_size=(int)strtod(tempStr,&tempStr);
         courseList[i]->m_queue= IsraeliQueueCreate(functionArray,isTheSameStudent,FRIENDSHIP_THR,RIVALRY_THR);
         if (!courseList[i]->m_queue){
             return NULL;//CREATE FAIL
@@ -450,7 +470,7 @@ Course *createCourseListFromFile(FILE* courses, int *length, FriendshipFunction 
 
     }
     courseList[lines]=NULL;
-    free(tempStr);
+    //free(tempStr);
     length[0]=lines;
     return courseList;
 }
@@ -540,7 +560,7 @@ Student findStudentByID(const Student *studentList, int ID){
     }
     int i=0;
     while(studentList[i]!=NULL){
-        if(atoi(studentList[i]->m_studentID)==ID){
+        if(studentList[i]->m_studentID==ID){
             return studentList[i];
         }
         i++;
@@ -575,7 +595,7 @@ int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB){
     }
     assert(studentA->m_friendsList);
     while(studentA->m_friendsList[i]!=0){
-        if (studentA->m_friendsList[i++]==atoi(studentB->m_studentID)){
+        if (studentA->m_friendsList[i++]==(studentB->m_studentID)){
             free(studentA);
             free(studentB);
             return FRIENDSHIP_THR;
@@ -583,7 +603,7 @@ int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB){
     }
     i=0;
     while(studentA->m_enemiesList[i]!=0){
-        if (studentA->m_enemiesList[i++]==atoi(studentB->m_studentID)){
+        if (studentA->m_enemiesList[i++]==(studentB->m_studentID)){
             free(studentA);
             free(studentB);
             return RIVALRY_THR;
@@ -617,14 +637,9 @@ int friendshipByASCII(void* ptrStudentA, void* ptrStudentB){
 int friendshipByIDDiff(void* ptrStudentA, void* ptrStudentB){
     assert(ptrStudentA&&ptrStudentB);
     Student studentA=(Student)ptrStudentA, studentB=(Student)ptrStudentB;
-    int diff = 0;
-    for (int i = 0; i < ID_LENGTH; i++) {
-        int digitA = studentA->m_studentID[i] - '0';
-        int digitB = studentB->m_studentID[i] - '0';
-        diff = diff * 10 + (digitA - digitB);
-    }
+    int diff=studentA->m_studentID-studentB->m_studentID;
     if (diff<0){
-        diff*=-1;
+        diff*=(-1);
     }
     return diff;
 }
