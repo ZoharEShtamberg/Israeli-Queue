@@ -45,7 +45,6 @@ struct EnrollmentSystem_t{
     Hacker  *m_hackersList;
     Course *m_coursesList;
     int m_studentsNum, m_coursesNum, m_hackersNum;
-    //int **m_queues;
     FriendshipFunction *m_functionArray;
 };
 
@@ -64,7 +63,7 @@ Student areAllHackersSatisfied(EnrollmentSystem sys);
 void printQueuesToFile(EnrollmentSystem sys, FILE* outFile);
 
 
-Student findStudentByID(const Student *studentList, int ID);
+ Student findStudentByID(const Student *studentList, int ID);
 
 Course findCourseByID(Course *courseList, int ID);
 
@@ -408,14 +407,11 @@ Student createStudentFromLine(char *str, int maxWord){
     if (!newStudent){
         return NULL;//MALLOC FAIL
     }
-
     char* tempStr=(char*)malloc(sizeof(char)*(maxWord+1)*2);
     if(!tempStr){
         free (newStudent);
         return NULL;
     }
-
-
     char *token=strtok(str, " ");
     int i=0;
     while(i<=L_NAME_INDEX){
@@ -447,7 +443,6 @@ Student createStudentFromLine(char *str, int maxWord){
     newStudent->m_friendsList=NULL;
 
     free(tempStr);
-
     return newStudent;
 }
 
@@ -642,7 +637,8 @@ int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB){
 int friendshipByASCII(void* ptrStudentA, void* ptrStudentB){
     assert(ptrStudentA&&ptrStudentB);
     Student studentA=(Student)ptrStudentA, studentB=(Student)ptrStudentB;
-    int stuANameLen=(int)strlen(studentA->m_name), stuBNameLen=(int)strlen(studentB->m_name), sum=0;
+    int stuANameLen=(int)strlen(studentA->m_name);
+    int stuBNameLen=(int)strlen(studentB->m_name), sum=0;
     if (stuANameLen<stuBNameLen){
         swap(&studentA,&studentB);
     }
@@ -670,4 +666,23 @@ int friendshipByIDDiff(void* ptrStudentA, void* ptrStudentB){
     return diff;
 }
 
+/*
+void TESTFUNCRION(EnrollmentSystem sys){
+    if(isTheSameStudent(sys->m_studentsList[0], findStudentByID(sys->m_studentsList,123456789))){
+        printf("okay those two work\n");
+    }
 
+    printf("but does this work?:\n");
+    if(friendshipByHackerFile(sys->m_hackersList[0]->m_studentCard,sys->m_studentsList[1])==-20){
+        printf("ohmagaaaad\n");
+    }
+
+    for (int i = 0; i < sys->m_studentsNum-1; i++) {
+        printf("the %d students name is %9s",i,sys->m_studentsList[i]->m_name);
+    }
+
+    printf("okay but does THIS work?: the sum is...   %d!!\n",friendshipByASCII(sys->m_studentsList[0],sys->m_studentsList[1]));
+
+
+
+}*/
