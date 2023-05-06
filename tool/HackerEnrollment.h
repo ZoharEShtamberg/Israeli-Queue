@@ -62,6 +62,8 @@ void ignoreUpper(EnrollmentSystem sys);
 int isTheSameStudent(void* stuA, void* stuB);
 
 
+//TODO this shouldn't be in the final version
+void TESTFUNCTION(EnrollmentSystem sys);
 
 
 #endif

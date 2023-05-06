@@ -48,40 +48,35 @@ struct EnrollmentSystem_t{
     FriendshipFunction *m_functionArray;
 };
 
-//=================================================================================
+//=====================================================================
 //Inner Functions Declarations:
-//=================================================================================
+//===================================================================
 
 Student *createStudentListFromFile(FILE* students, int *length);
+Student createStudentFromLine(char* str,int maxWord);
 Course *createCourseListFromFile(FILE* courses, int *length,FriendshipFunction *functionArray);
 Hacker *createHackersListFromFile(FILE* hackers, int *length, const Student *studentList,int maxArrayNum);
-Student createStudentFromLine(char* str,int maxWord);
+Hacker createHacker(FILE *hackers, unsigned long *maxLineLen,const Student *studentList);
+
+void destroyStudentList(Student *List,int length);
+void destroyCoursesList(Course *List,int length);
+void destroyHackersList(Hacker *List,int length);
+
+Student findStudentByID(const Student *studentList, int ID);
+Course findCourseByID(Course *courseList, int ID);
 
 void updateFriendshipFunctions(EnrollmentSystem sys);
 void insertHackersToQueues(EnrollmentSystem sys);
 Student areAllHackersSatisfied(EnrollmentSystem sys);
 void printQueuesToFile(EnrollmentSystem sys, FILE* outFile);
 
-
- Student findStudentByID(const Student *studentList, int ID);
-
-Course findCourseByID(Course *courseList, int ID);
-
-
-
 int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB);
 int friendshipByASCII(void* ptrStudentA, void* ptrStudentB);
 int friendshipByIDDiff(void* ptrStudentA, void* ptrStudentB);
 
-void destroyStudentList(Student *List,int length);
-void destroyCoursesList(Course *List,int length);
-void destroyHackersList(Hacker *List,int length);
-
-
-/*==================================================================================
+/*=======================================================================
  *LIBRARY FUNCTIONS: lord help
- ==================================================================================
- */
+ ========================================================================*/
 
 /**
  * literally Destroys everything
@@ -99,8 +94,6 @@ void destroyEnrollment(EnrollmentSystem sys){
 }
 
 
-
-
 /**Creates a new Enrollment system based on the files provided
  * FriendshipFunction array is initialized to null.
  * returns a pointer to the function-memory must be freed by destroyEnrollment
@@ -115,22 +108,22 @@ EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
     if (!newSys){
         return NULL;//MALLOC FAIL
     }
-    int counter=0;
 
-    newSys->m_studentsList= createStudentListFromFile(students,&counter);
+    newSys->m_studentsList= createStudentListFromFile(students,&newSys->m_studentsNum);
     if(!newSys->m_studentsList){
         destroyEnrollment(newSys);
         return NULL;//MALLOC FAIL
     }
-   newSys->m_studentsNum=counter;
+
     newSys->m_functionArray= (FriendshipFunction *)malloc(sizeof (FriendshipFunction)*AMOUNT_OF_FF);
     if(!newSys->m_functionArray){
         destroyEnrollment(newSys);
         return NULL;//MALLOC FAIL
     }
-    for(int i =0;i<AMOUNT_OF_FF;i++){
+    for(int i =0;i<AMOUNT_OF_FF;i++){// initializing functions to NULL
         newSys->m_functionArray[i]=NULL;
     }
+
     newSys->m_coursesList= createCourseListFromFile(courses,&newSys->m_coursesNum, newSys->m_functionArray);
     if(!newSys->m_coursesList){
         destroyEnrollment(newSys);
@@ -151,22 +144,24 @@ EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
  * */
 EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues){
     assert(sys&&queues);
-    char* tempStr=malloc(sizeof(char)* (getMaxWordInFile(queues)+1));
+    unsigned long maxWord=getMaxWordInFile(queues)+1;
+    char* tempStr=malloc(sizeof(char)* (maxWord));
     if (!tempStr){
         return NULL;//MALLOC FAIL
     }
 	int linesInFile = getLineNumInFile(queues);
     for (int i=0;i < linesInFile;i++){	//:)
-        putNextLineToString(queues,tempStr);	//maybe use getline
+        getline(&tempStr,&maxWord,queues);	//maybe use getline
         char *token= strtok(tempStr," ");
-        Course tempCourse=findCourseByID(sys->m_coursesList,(int)strtod(token,&token));
+        Course tempCourse=findCourseByID(sys->m_coursesList,atoi(token));
         token= strtok(NULL," ");
         while (token!=NULL){
-            Student tempStudent= findStudentByID(sys->m_studentsList,(int)strtod(token,&token));
+            Student tempStudent= findStudentByID(sys->m_studentsList,atoi(token));
             IsraeliQueueEnqueue(tempCourse->m_queue,tempStudent);
             token= strtok(NULL," ");
         }
     }
+    free(tempStr);
     return sys;
 }
 
@@ -222,7 +217,9 @@ void ignoreUpper(EnrollmentSystem sys){
  *=========================================================================
 */
 
-
+//=======================================================
+//DESTROY FUNCTIONS:
+//=======================================================
 void destroyStudentList(Student *List,int length){
     if(!List){
         return;
@@ -263,6 +260,273 @@ void destroyHackersList(Hacker *List,int length){
         }
     }
     free(List);
+}
+
+
+//=======================================================
+//CREATE FUNCTIONS:
+//=======================================================
+
+/**
+ * creates the student array
+ *
+ * @param students
+ * @param length where to store the length of array
+ * @return array list of all students in file
+ * in case of failure returns NULL
+ * user is responsible for freeing malloc
+ */
+Student *createStudentListFromFile(FILE* students, int *length) {
+    assert(students != NULL);
+    int maxNameSize = getMaxWordInFile(students), lines = getLineNumInFile(students);
+    *length = lines;
+    unsigned long maxLineSize=getMaxLineInFile(students);
+    char *tempStr = malloc(sizeof(char) * (maxNameSize+1));
+    if (!tempStr) {
+        return NULL;//MALLOC FAIL
+    }
+    Student *studentList = malloc((sizeof(Student)) * (lines ));
+    if (!studentList) {
+        free(tempStr);
+        return NULL;//MALLOC FAIL
+    }
+    for (int k = 0; k < lines; k++) {
+        getline(&tempStr,&maxLineSize,students );
+        studentList[k] = createStudentFromLine(tempStr, maxNameSize);
+        if (!studentList[k]) {
+            free(tempStr);
+            destroyStudentList(studentList,k+1);
+            return NULL;
+        }
+    }
+
+    free(tempStr);
+    return studentList;
+}
+
+/**
+ * creates student from line
+ * @param str a line describing student info
+ * @param maxWord mas name length
+ * @return pointer to student
+ *  in case of failure returns NULL
+ * user is responsible for freeing malloc
+ */
+Student createStudentFromLine(char *str, int maxWord){
+    Student newStudent=(Student)malloc(sizeof(*newStudent));
+    if (!newStudent){
+        return NULL;//MALLOC FAIL
+    }
+    char* tempStr=malloc(sizeof(char)*(maxWord+1)*2);
+    if(!tempStr){
+        free (newStudent);
+        return NULL;
+    }
+    char *token=strtok(str, " ");
+    int i=0;
+    while(i<=L_NAME_INDEX&&token){
+        switch (i++) {
+            case ID_INDEX:
+                newStudent->m_studentID= (int)strtod(token, &token);
+                break;
+            case F_NAME_INDEX:
+                strcpy(tempStr, token);
+                strcat(tempStr," ");
+                break;
+            case L_NAME_INDEX:
+                strcat(tempStr, token);
+                break;
+            default:
+                break;
+        }
+        token= strtok(NULL, " ");
+    }
+
+    newStudent->m_name= malloc(sizeof(char)*(strlen(tempStr)+1));
+    if(!newStudent->m_name){
+        free(newStudent);
+        free(tempStr);
+        return NULL;// MALLOC FAIL
+    }
+    strcpy(newStudent->m_name,tempStr);
+    newStudent->m_enemiesList=NULL;
+    newStudent->m_friendsList=NULL;
+    free(tempStr);
+    return newStudent;
+}
+
+/**
+ * creates course list
+ * @param courses
+ * @param length
+ * @param functionArray
+ * @return pointer to course list
+ * *  in case of failure returns NULL
+ * user is responsible for freeing malloc
+ */
+Course *createCourseListFromFile(FILE* courses, int *length, FriendshipFunction *functionArray){
+    assert(courses!=NULL);
+    unsigned long maxStrLen= getMaxLineInFile(courses)+1;
+    int lines= getLineNumInFile(courses);
+    Course *courseList=(Course*)malloc(sizeof(Course)*lines);
+    if (!courseList){
+        return NULL;//MALLOC FAIL
+    }
+    char *tempStr= malloc(sizeof (char)*maxStrLen);
+    if(!tempStr){
+        free(courseList);
+        return NULL;//MALLOC FAIL
+    }
+
+    for (int i=0;i<lines;i++){
+        courseList[i]=(Course)malloc(sizeof(*courseList[i]));
+        if(!courseList[i]){
+            destroyCoursesList(courseList,i);
+            free (tempStr);
+            return NULL;//MALLOC FAIL
+        }
+        getline(&tempStr,&maxStrLen ,courses);
+        courseList[i]->m_number= atoi(strtok(tempStr," "));
+        courseList[i]->m_size=atoi(strtok(NULL, " "));
+        courseList[i]->m_queue= IsraeliQueueCreate(functionArray,isTheSameStudent,FRIENDSHIP_THR,RIVALRY_THR);
+        if (!courseList[i]->m_queue){
+            destroyCoursesList(courseList,i);
+            free(tempStr);
+            return NULL;//CREATE FAIL
+        }
+    }
+    free(tempStr);
+    *length=lines;
+    return courseList;
+}
+
+/**
+ *
+ * @param hackers file containing hacker inf0
+ * @param length where to store amount of hackers
+ * @param studentList filled in student list
+ * @param maxArrayNum maximum array size for friends and courses lists
+ * @return pointer hacker list
+ *  in case of failure returns NULL
+ * user is responsible for freeing malloc
+ */
+Hacker *createHackersListFromFile(FILE* hackers, int *length, const Student *studentList, int maxArrayNum){
+    assert(hackers&&studentList&&(maxArrayNum>0));
+    unsigned long maxLineLen= getMaxLineInFile(hackers)+1;
+    *length=getLineNumInFile(hackers)/4;
+    Hacker *hackerList=(Hacker*) malloc(sizeof(Hacker)*(*length));
+    if(!hackerList){
+        return NULL;//MALLOC FAIL
+    }
+
+
+    for (int i=0;i<(*length);i++){
+        hackerList[i]= createHacker(hackers,&maxLineLen, studentList);
+        if(!hackerList[i]){
+            destroyHackersList(hackerList,i);
+            return NULL;
+        }
+        int k=0;
+        while(hackerList[i]->m_preferredCourses[k++]);
+        hackerList[i]->m_preferredCoursesSize=k;
+    }
+    return hackerList;
+}
+
+
+/**creates a new hacker object from the next hacker data in file according to format
+ *in case of failure returns null
+ */
+Hacker createHacker(FILE *hackers, unsigned long *maxLineLen,const Student *studentList){
+    if(!hackers){
+        return NULL;//BAD PARM
+    }
+    char *tempStr=malloc(sizeof(char)*(*maxLineLen));
+    if (!tempStr){
+        return NULL;//MALLOC FAIL
+    }
+    Hacker newHacker=(Hacker)malloc(sizeof (*newHacker));
+    if(!newHacker){
+        free(tempStr);
+        return NULL;//MALLOC FAIL;
+    }
+    getline(&tempStr,maxLineLen,hackers);
+    newHacker->m_studentCard= findStudentByID(studentList, atoi(tempStr));
+    assert(newHacker->m_studentCard);
+    //parse line to courses array:
+    getline(&tempStr,maxLineLen,hackers);
+    newHacker->m_preferredCourses= createIntArrayFromStr(tempStr);
+    if(!newHacker->m_preferredCourses){
+        free(tempStr);
+        free(newHacker);
+        return NULL; //MALLOC FAIL
+    }
+    //parse line to friends array:
+    getline(&tempStr,maxLineLen,hackers);
+    newHacker->m_studentCard->m_friendsList=createIntArrayFromStr(tempStr);
+    if(!newHacker->m_studentCard->m_friendsList){
+        free(tempStr);
+        free(newHacker->m_preferredCourses);
+        free(newHacker);
+        return NULL; //MALLOC FAIL
+    }
+    //parse line to enemies array:
+    getline(&tempStr,maxLineLen,hackers);
+    newHacker->m_studentCard->m_enemiesList=createIntArrayFromStr(tempStr);
+    free(tempStr);
+    if(!newHacker->m_studentCard->m_enemiesList){
+        free(newHacker->m_studentCard->m_friendsList);
+        free(newHacker);
+        return NULL; //MALLOC FAIL
+    }
+    return newHacker;
+}
+
+
+//=======================================================
+//READ AND HACK FUNCTIONS
+//=======================================================
+/**
+ * swaps two students
+ */
+void swap(Student *studentA,Student *studentB){
+    Student temp1=*studentA;
+    *studentA=*studentB;
+    *studentB=temp1;
+}
+
+
+/**
+ * finds relevant course and returns a pointer to it
+ */
+Course findCourseByID(Course *courseList, int ID){
+    assert(courseList);
+    int i=0;
+    while(courseList[i]!=NULL){
+        if (courseList[i]->m_number==ID){
+            return courseList[i];
+        }
+        i++;
+    }
+    return NULL;
+}
+
+
+/**
+ * finds relevant student and returns a pointer to it
+ */
+Student findStudentByID(const Student *studentList, int ID){
+    if(!studentList){
+        return NULL;//BAD PARAM
+    }
+    int i=0;
+    while(studentList[i]!=NULL){
+        if(studentList[i]->m_studentID==ID){
+            return studentList[i];
+        }
+        i++;
+    }
+    return NULL;
 }
 
 
@@ -358,247 +622,8 @@ Student areAllHackersSatisfied(EnrollmentSystem sys){
 }
 
 
-/**
- * creates the student array
- *
- * @param students
- * @param length where to store the length of array
- * @return array list of all students in file
- * in case of failure returns NULL
- * user is responsible for freeing malloc
- */
-Student *createStudentListFromFile(FILE* students, int *length) {
-    assert(students != NULL);
-    int maxNameSize = getMaxWordInFile(students), lines = getLineNumInFile(students);
-    *length = lines;
-    char *tempStr = malloc(sizeof(char) * (getMaxLineInFile(students)+1));
-    if (!tempStr) {
-        return NULL;//MALLOC FAIL
-    }
-    Student *studentList = malloc((sizeof(Student)) * (lines + 1));
-    if (!studentList) {
-        free(tempStr);
-        return NULL;//MALLOC FAIL
-    }
-    for (int k = 0; k < lines; k++) {
-        putNextLineToString(students, tempStr);
-        studentList[k] = createStudentFromLine(tempStr, maxNameSize);
-        if (!studentList[k]) {
-            free(tempStr);
-            destroyStudentList(studentList,k+1);
-            return NULL;
-        }
-    }
-
-    free(tempStr);
-    studentList[lines] = NULL;
-    return studentList;
-}
-
-/**
- * creates student from line
- * @param str a line describing student info
- * @param maxWord mas name length
- * @return pointer to student
- *  in case of failure returns NULL
- * user is responsible for freeing malloc
- */
-Student createStudentFromLine(char *str, int maxWord){
-    Student newStudent=(Student)malloc(sizeof(*newStudent));
-    if (!newStudent){
-        return NULL;//MALLOC FAIL
-    }
-    char* tempStr=malloc(sizeof(char)*(maxWord+1)*2);
-    if(!tempStr){
-        free (newStudent);
-        return NULL;
-    }
-    char *token=strtok(str, " ");
-    int i=0;
-    while(i<=L_NAME_INDEX){
-        switch (i++) {
-            case ID_INDEX:
-                newStudent->m_studentID= (int)strtod(token, &token);
-                break;
-            case F_NAME_INDEX:
-                strcpy(tempStr, token);
-                strcat(tempStr," ");
-                break;
-            case L_NAME_INDEX:
-                strcat(tempStr, token);
-                break;
-            default:
-                break;
-        }
-        token= strtok(NULL, " ");
-    }
-
-    newStudent->m_name= (char*)malloc(sizeof(char)*(strlen(tempStr)+2));
-    if(!newStudent->m_name){
-        free(newStudent);
-        free(tempStr);
-        return NULL;// MALLOC FAIL
-    }
-    strcpy(newStudent->m_name,tempStr);
-    newStudent->m_enemiesList=NULL;
-    newStudent->m_friendsList=NULL;
-
-    free(tempStr);
-    return newStudent;
-}
-
-/**
- * creates course list
- * @param courses
- * @param length
- * @param functionArray
- * @return pointer to course list
- * *  in case of failure returns NULL
- * user is responsible for freeing malloc
- */
-Course *createCourseListFromFile(FILE* courses, int *length, FriendshipFunction *functionArray){
-    assert(courses!=NULL);
-    int maxWord= getMaxWordInFile(courses),lines= getLineNumInFile(courses);
-    Course *courseList=(Course*)malloc(sizeof(struct Course_t)*(lines+1));
-    if (!courseList){
-        return NULL;//MALLOC FAIL
-    }
-    char *tempStr=(char*) malloc(sizeof (char)*(maxWord*2+2));
-    if(!tempStr){
-        free(courseList);
-        return NULL;//MALLOC FAIL
-    }
-
-    for (int i=0;i<lines;i++){
-        courseList[i]=(Course)malloc(sizeof(Course));
-        if(!courseList[i]){
-            destroyCoursesList(courseList,i);
-            free (tempStr);
-            return NULL;//MALLOC FAIL
-        }
-        putNextWordToString(courses,tempStr);
-        courseList[i]->m_number= atoi(tempStr);
-        putNextWordToString(courses,tempStr);
-        courseList[i]->m_size=atoi(tempStr);
-        courseList[i]->m_queue= IsraeliQueueCreate(functionArray,isTheSameStudent,FRIENDSHIP_THR,RIVALRY_THR);
-        if (!courseList[i]->m_queue){
-            destroyCoursesList(courseList,i);
-            free(tempStr);
-            return NULL;//CREATE FAIL
-        }
-        courseList[i]->m_queue=NULL;
-        strcpy(tempStr," ");
-    }
-    free(tempStr);
-    length[0]=lines;
-    return courseList;
-}
-
-/**
- *
- * @param hackers file containing hacker inf0
- * @param length where to store amount of hackers
- * @param studentList filled in student list
- * @param maxArrayNum maximum array size for friends and courses lists
- * @return pointer hacker list
- *  in case of failure returns NULL
- * user is responsible for freeing malloc
- */
-Hacker *createHackersListFromFile(FILE* hackers, int *length, const Student *studentList, int maxArrayNum){
-    assert(hackers!=NULL);
-    int maxLine= getMaxLineInFile(hackers) ,linesNum= getLineNumInFile(hackers);
-    Hacker *hackerList=(Hacker*) malloc(sizeof(Hacker)*((linesNum/4)+1));
-    char *tempStr=(char*) malloc(sizeof(char)*maxLine);
-    if (!tempStr||!hackerList){
-        return NULL;//MALLOC FAIL
-    }
-    int *tempArray=(int*)malloc(sizeof(int)*maxArrayNum);
-    if(!tempArray){
-        return NULL;//MALLOC FAIL
-    }
-    for (int i=0;i<linesNum/4;i++){
-        putNextWordToString(hackers,tempStr);
-        hackerList[i]=(Hacker)malloc(sizeof (struct Hacker_t));
-        if(!hackerList[i]){
-            return NULL;//MALLOC FAIL;
-        }
-
-      //  hackerList[i]->m_studentCard= (Student )malloc(sizeof (Student));
-
-        //if(!hackerList[i]->m_studentCard){
-          //  return NULL;//couldn't find student;
-      //  }
-        hackerList[i]->m_studentCard= findStudentByID(studentList, (int)strtol(tempStr,&tempStr,10));
-        //parse line to courses:
-        putNextLineToString(hackers,tempStr);
-        hackerList[i]->m_preferredCourses= fillIntArrayFromStr(tempArray,tempStr);
-        if(!hackerList[i]->m_preferredCourses){
-            return NULL; //MALLOC FAIL
-        }
-        resetIntArray(tempArray,maxArrayNum);
-
-        putNextLineToString(hackers,tempStr);
-        hackerList[i]->m_studentCard->m_friendsList=fillIntArrayFromStr(tempArray,tempStr);
-        if(!hackerList[i]->m_studentCard->m_friendsList){
-            return NULL; //MALLOC FAIL
-        }
-        resetIntArray(tempArray,maxArrayNum);
-
-        //parse line to enemies:
-        putNextLineToString(hackers,tempStr);
-        hackerList[i]->m_studentCard->m_enemiesList=fillIntArrayFromStr(tempArray,tempStr);
-        if(!hackerList[i]->m_studentCard->m_enemiesList){
-            return NULL; //MALLOC FAIL
-        }
-        resetIntArray(tempArray,maxArrayNum);
-    }
-    hackerList[linesNum/4]=NULL;
-    length[0]=linesNum/4;
-    return hackerList;
-}
-
-/**
- * finds relevant course and returns a pointer to it
- */
-Course findCourseByID(Course *courseList, int ID){
-    assert(courseList);
-    int i=0;
-    while(courseList[i]!=NULL){
-        if (courseList[i]->m_number==ID){
-            return courseList[i];
-        }
-        i++;
-    }
-    return NULL;
-}
 
 
-/**
- * finds relevant student and returns a pointer to it
- */
-Student findStudentByID(const Student *studentList, int ID){
-    if(!studentList){
-        return NULL;//BAD PARAM
-    }
-    int i=0;
-    while(studentList[i]!=NULL){
-        if(studentList[i]->m_studentID==ID){
-            return studentList[i];
-        }
-        i++;
-    }
-    return NULL;
-}
-
-
-/**
- * swaps two students
- */
-void swap(Student *studentA,Student *studentB){
-    Student temp1=*studentA;
-    *studentA=*studentB;
-    *studentB=temp1;
-}
 
 
 /**
@@ -618,16 +643,12 @@ int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB){
     assert(studentA->m_friendsList);
     while(studentA->m_friendsList[i]!=0){
         if (studentA->m_friendsList[i++]==(studentB->m_studentID)){
-            free(studentA);
-            free(studentB);
             return FRIENDSHIP_THR;
         }
     }
     i=0;
     while(studentA->m_enemiesList[i]!=0){
         if (studentA->m_enemiesList[i++]==(studentB->m_studentID)){
-            free(studentA);
-            free(studentB);
             return RIVALRY_THR;
         }
     }
@@ -667,23 +688,23 @@ int friendshipByIDDiff(void* ptrStudentA, void* ptrStudentB){
     return diff;
 }
 
-/*
-void TESTFUNCRION(EnrollmentSystem sys){
+/*TODO this shouldn't be in the final version
+void TESTFUNCTION(EnrollmentSystem sys){
     if(isTheSameStudent(sys->m_studentsList[0], findStudentByID(sys->m_studentsList,123456789))){
         printf("okay those two work\n");
     }
-
     printf("but does this work?:\n");
     if(friendshipByHackerFile(sys->m_hackersList[0]->m_studentCard,sys->m_studentsList[1])==-20){
         printf("ohmagaaaad\n");
     }
-
+    printf("before Ignore Upper:\n");
     for (int i = 0; i < sys->m_studentsNum-1; i++) {
-        printf("the %d students name is %9s",i,sys->m_studentsList[i]->m_name);
+        printf("the %d students name is %9s\n",i,sys->m_studentsList[i]->m_name);
     }
-
-    printf("okay but does THIS work?: the sum is...   %d!!\n",friendshipByASCII(sys->m_studentsList[0],sys->m_studentsList[1]));
-
-
-
+    printf("After Ignore Upper:\n");
+    for (int i = 0; i < sys->m_studentsNum-1; i++) {
+        printf("the %d students name is %9s\n",i,sys->m_studentsList[i]->m_name);
+    }
+    int k=friendshipByASCII(sys->m_studentsList[0],sys->m_studentsList[1]));
+    printf("okay but does THIS work?: the sum is...   %d!!\n",k);
 }*/
