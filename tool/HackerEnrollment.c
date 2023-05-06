@@ -155,7 +155,8 @@ EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues){
     if (!tempStr){
         return NULL;//MALLOC FAIL
     }
-    for (int i=0;i< getLineNumInFile(queues);i++){	//fix
+	int linesInFile = getLineNumInFile(queues);
+    for (int i=0;i < linesInFile;i++){	//:)
         putNextLineToString(queues,tempStr);	//maybe use getline
         char *token= strtok(tempStr," ");
         Course tempCourse=findCourseByID(sys->m_coursesList,(int)strtod(token,&token));
@@ -369,12 +370,12 @@ Student areAllHackersSatisfied(EnrollmentSystem sys){
 Student *createStudentListFromFile(FILE* students, int *length) {
     assert(students != NULL);
     int maxNameSize = getMaxWordInFile(students), lines = getLineNumInFile(students);
-    length[0] = lines;
-    char *tempStr = (char *) malloc(sizeof(char) * getMaxLineInFile(students));
+    *length = lines;
+    char *tempStr = malloc(sizeof(char) * (getMaxLineInFile(students)+1));
     if (!tempStr) {
         return NULL;//MALLOC FAIL
     }
-    Student *studentList = (Student*) malloc((sizeof(Student)) * (lines + 1));
+    Student *studentList = malloc((sizeof(Student)) * (lines + 1));
     if (!studentList) {
         free(tempStr);
         return NULL;//MALLOC FAIL
@@ -403,11 +404,11 @@ Student *createStudentListFromFile(FILE* students, int *length) {
  * user is responsible for freeing malloc
  */
 Student createStudentFromLine(char *str, int maxWord){
-    Student newStudent=(Student)malloc(sizeof(struct Student_t));
+    Student newStudent=(Student)malloc(sizeof(*newStudent));
     if (!newStudent){
         return NULL;//MALLOC FAIL
     }
-    char* tempStr=(char*)malloc(sizeof(char)*(maxWord+1)*2);
+    char* tempStr=malloc(sizeof(char)*(maxWord+1)*2);
     if(!tempStr){
         free (newStudent);
         return NULL;
