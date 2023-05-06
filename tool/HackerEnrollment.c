@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
-#include "IsraeliQueue.h"
 #include <string.h>
 #include "FileHelper.h"
 #include "HackerEnrollment.h"
+#include "../IsraeliQueue.h"
 
 
 #define ID_LENGTH 10
@@ -112,7 +112,7 @@ void destroyEnrollment(EnrollmentSystem sys){
 
     if(sys->m_coursesList){
         for (int i=0; i<sys->m_coursesNum; i++){
-            //TODO put destroy queue
+            IsraeliQueueDestroy(sys->m_coursesList[i]->m_queue);
         }
     }
 
@@ -203,7 +203,6 @@ void hackEnrollment(EnrollmentSystem sys, FILE* out){
         return;
     }
     printQueuesToFile(sys, out);
-    return;
     }
 
 /**:
@@ -226,10 +225,10 @@ int isTheSameStudent(void* stuA, void* stuB){
 void ignoreUpper(EnrollmentSystem sys){
     for (int k = 0; k < sys->m_studentsNum; k++)
     {
-        int len = strlen(sys->m_studentsList[k]->m_name);
+        int len = (int)strlen(sys->m_studentsList[k]->m_name);
         for (int i = 0; i < len; i++) {
             if (sys->m_studentsList[k]->m_name[i] >= 'A' && sys->m_studentsList[k]->m_name[i] <= 'Z') {
-                sys->m_studentsList[k]->m_name[i] = sys->m_studentsList[k]->m_name[i] + ('a' - 'A');
+                sys->m_studentsList[k]->m_name[i] =(char) (sys->m_studentsList[k]->m_name[i] + ('a' - 'A'));
             }
         }
     }
@@ -484,7 +483,7 @@ Hacker *createHackersListFromFile(FILE* hackers, int *length, const Student *stu
         if(!hackerList[i]){
             return NULL;//MALLOC FAIL;
         }
-        hackerList[i]->m_studentCard= findStudentByID(studentList, strtol(tempStr,&tempStr,10));
+        hackerList[i]->m_studentCard= findStudentByID(studentList, (int)strtol(tempStr,&tempStr,10));
         if(!hackerList[i]->m_studentCard){
             return NULL;//couldn't find student;
         }
