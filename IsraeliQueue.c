@@ -2,8 +2,8 @@
 // Created by Zohar Shtamberg on 17/04/2023.
 //
 #include <stdlib.h>
-#include <math.h>
 #include <assert.h>
+#include <math.h>
 #include "IsraeliQueue.h"
 
 

@@ -111,7 +111,7 @@ EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
    if(!students||!courses||!hackers){
        return NULL;//BAD PARAM
    }
-    EnrollmentSystem newSys=(EnrollmentSystem)malloc(sizeof(EnrollmentSystem));
+    EnrollmentSystem newSys=(EnrollmentSystem)malloc(sizeof(*newSys));
     if (!newSys){
         return NULL;//MALLOC FAIL
     }
@@ -151,12 +151,12 @@ EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
  * */
 EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues){
     assert(sys&&queues);
-    char* tempStr=(char*)malloc(sizeof(char)* getMaxWordInFile(queues+1));
+    char* tempStr=malloc(sizeof(char)* (getMaxWordInFile(queues)+1));
     if (!tempStr){
         return NULL;//MALLOC FAIL
     }
-    for (int i=0;i< getLineNumInFile(queues);i++){
-        putNextLineToString(queues,tempStr);
+    for (int i=0;i< getLineNumInFile(queues);i++){	//fix
+        putNextLineToString(queues,tempStr);	//maybe use getline
         char *token= strtok(tempStr," ");
         Course tempCourse=findCourseByID(sys->m_coursesList,(int)strtod(token,&token));
         token= strtok(NULL," ");

@@ -2,10 +2,10 @@ CC=gcc-12
 OBJS=IsraeliQueue.o tool/HackerEnrollment.o tool/main.o tool/FileHelper.o
 EXEC=prog
 DEBUG=-g
-CFLAGS=-std=c99 -Wall -Werror -pedantic-errors -Itool -I. -Im
+CFLAGS=-std=c99 -Wall -Werror -pedantic-errors -Itool -I. -lm
 
 $(EXEC) : $(OBJS)
-	$(CC) $(CFLAGS) $(DEBUG_FLAGS) $(OBJS) -o $@
+	$(CC) $(CFLAGS) $(DEBUG) $(OBJS) -o $@
 
 
 IsraeliQueue.o: IsraeliQueue.c IsraeliQueue.h
