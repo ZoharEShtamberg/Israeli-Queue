@@ -5,7 +5,7 @@
 #include "FileHelper.h"
 #include "HackerEnrollment.h"
 #include "../IsraeliQueue.h"
-
+//TODO not suppose to be
 
 
 #define ID_INDEX 0
@@ -17,6 +17,7 @@
 #define AMOUNT_OF_FF 3
 
 #define MIN(A, B) ((A)<=(B)) ? (A) : (B)
+#define MAX(A, B) ((A)>=(B)) ? (A) : (B)
 //=================================================================
 /*typedefs & struct declaration*/
 //=================================================================
@@ -66,7 +67,7 @@ Student findStudentByID(const Student *studentList, int ID);
 Course findCourseByID(Course *courseList, int ID);
 
 void updateFriendshipFunctions(EnrollmentSystem sys);
-void insertHackersToQueues(EnrollmentSystem sys);
+bool insertHackersToQueues(EnrollmentSystem sys);
 Student areAllHackersSatisfied(EnrollmentSystem sys);
 void printQueuesToFile(EnrollmentSystem sys, FILE* outFile);
 
@@ -129,7 +130,7 @@ EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
         destroyEnrollment(newSys);
         return NULL;//CREATE FAIL
     }
-    int maxArr=max(newSys->m_coursesNum,newSys->m_studentsNum);
+    int maxArr=MAX(newSys->m_coursesNum,newSys->m_studentsNum);
     newSys->m_hackersList= createHackersListFromFile(hackers,&(newSys->m_hackersNum),newSys->m_studentsList, maxArr);
     if (!newSys->m_hackersList){
         destroyEnrollment(newSys);
@@ -173,14 +174,16 @@ void hackEnrollment(EnrollmentSystem sys, FILE* out){
         return;//BAD PARAM
     }
     updateFriendshipFunctions(sys);
-    insertHackersToQueues(sys);
+    if(!insertHackersToQueues(sys)){
+        return;
+    }
     Student firstHackerUnsatisfied= areAllHackersSatisfied(sys);
     if(firstHackerUnsatisfied){
         fprintf(out, "Cannot satisfy constraints for %*d\n",ID_LENGTH,firstHackerUnsatisfied->m_studentID);
         return;
     }
     printQueuesToFile(sys, out);
-    }
+}
 
 /**:
  *returns 1 if equal and 0 if not
@@ -461,6 +464,9 @@ Hacker createHacker(FILE *hackers, unsigned long *maxLineLen,const Student *stud
         free(newHacker);
         return NULL; //MALLOC FAIL
     }
+    int k=0;
+    while( newHacker->m_preferredCourses[k++]);
+    newHacker->m_preferredCoursesSize=k;
     //parse line to friends array:
     getline(&tempStr,maxLineLen,hackers);
     newHacker->m_studentCard->m_friendsList=createIntArrayFromStr(tempStr);
@@ -569,15 +575,19 @@ void updateFriendshipFunctions(EnrollmentSystem sys) {
  * this function inserts hackers found in Enrollment system to their preferred courses
  */
 
-void insertHackersToQueues(EnrollmentSystem sys){
+bool insertHackersToQueues(EnrollmentSystem sys){
     assert(sys);
     for (int i=0; i<sys->m_hackersNum;i++) {
-        for (int k = 0; k < sys->m_hackersList[i]->m_preferredCoursesSize; k++) {
-            Course tempCourse = findCourseByID(sys->m_coursesList, sys->m_hackersList[i]->m_preferredCourses[k]);
+        int k=0;
+        while(sys->m_hackersList[i]->m_preferredCourses[k]) {
+            Course tempCourse = findCourseByID(sys->m_coursesList, sys->m_hackersList[i]->m_preferredCourses[k++]);
             assert(tempCourse);
-            IsraeliQueueEnqueue(tempCourse->m_queue,sys->m_hackersList[i]->m_studentCard);
+            if (IsraeliQueueEnqueue(tempCourse->m_queue,sys->m_hackersList[i]->m_studentCard)!=ISRAELIQUEUE_SUCCESS){
+                return false;
+            }
         }
     }
+    return true;
 
 }
 
@@ -590,8 +600,9 @@ Student areAllHackersSatisfied(EnrollmentSystem sys){
     assert(sys);
     for (int i=0; i<sys->m_hackersNum;i++){
         int failCount=0;
-        for (int k=0;k<sys->m_hackersList[i]->m_preferredCoursesSize;k++){
-            Course tempCourse = findCourseByID(sys->m_coursesList, sys->m_hackersList[i]->m_preferredCourses[k]);
+        int k=0;
+        while(sys->m_hackersList[i]->m_preferredCourses[k]){
+            Course tempCourse = findCourseByID(sys->m_coursesList, sys->m_hackersList[i]->m_preferredCourses[k++]);
             assert(tempCourse);
             IsraeliQueue tempQueue= IsraeliQueueClone(tempCourse->m_queue);
             assert(tempQueue);
@@ -656,24 +667,41 @@ int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB){
 }
 
 
-int friendshipByASCII(void* ptrStudentA, void* ptrStudentB){
-    assert(ptrStudentA&&ptrStudentB);
-    Student studentA=(Student)ptrStudentA, studentB=(Student)ptrStudentB;
-    int stuANameLen=(int)strlen(studentA->m_name);
-    int stuBNameLen=(int)strlen(studentB->m_name), sum=0;
-    if (stuANameLen<stuBNameLen){
-        swap(&studentA,&studentB);
-    }
-    for (int i=0;i<stuBNameLen;i++){
-        int tempValue=((int)(studentA->m_name[i])-(int)(studentB->m_name[i]));
+int calculateDiffInASCII(char *a, char *b){
+    int minSize= MIN(strlen(a), strlen(b));
+    int sum=0, tempValue;
+    int i=0;
+    while(a[i]&&b[i]) {
+        tempValue=a[i]-b[i];
         if(tempValue<0){
             tempValue*=(-1);
         }
+        i++;
         sum+=tempValue;
     }
-    for (int i=stuBNameLen;i<stuANameLen;i++)
-        sum+=(int)studentA->m_name[i];
+    if (a[i]){
+        while(a[i]){
+            sum+=a[i++];
+        }
+    }
+    else{
+        while(b[i]){
+            sum+=b[i++];
+        }
+    }
+    return sum;
+}
 
+
+int friendshipByASCII(void* ptrStudentA, void* ptrStudentB){
+    assert(ptrStudentA&&ptrStudentB);
+    Student studentA=(Student)ptrStudentA, studentB=(Student)ptrStudentB;
+    char *namePtrA= strtok_r(studentA->m_name," ",&namePtrA);
+    char *namePtrB= strtok_r(studentB->m_name," ",&namePtrB);
+    int sum= calculateDiffInASCII(namePtrA,namePtrB);
+    namePtrA= strtok_r(NULL,"\0",&namePtrA);
+    namePtrB= strtok_r(NULL,"\0",&namePtrB);
+    sum+=calculateDiffInASCII(namePtrA,namePtrB);
     return sum;
 }
 
@@ -688,7 +716,7 @@ int friendshipByIDDiff(void* ptrStudentA, void* ptrStudentB){
     return diff;
 }
 
-/*TODO this shouldn't be in the final version
+/*TODO this shouldn't be in the final version*/
 void TESTFUNCTION(EnrollmentSystem sys){
     if(isTheSameStudent(sys->m_studentsList[0], findStudentByID(sys->m_studentsList,123456789))){
         printf("okay those two work\n");
@@ -698,15 +726,17 @@ void TESTFUNCTION(EnrollmentSystem sys){
         printf("ohmagaaaad\n");
     }
     printf("before Ignore Upper:\n");
-    for (int i = 0; i < sys->m_studentsNum-1; i++) {
+    for (int i = 0; i < sys->m_studentsNum; i++) {
         printf("the %d students name is %9s\n",i,sys->m_studentsList[i]->m_name);
     }
     printf("After Ignore Upper:\n");
-    ignoreUpper(newSys);
-    for (int i = 0; i < sys->m_studentsNum-1; i++) {
+    ignoreUpper(sys);
+    for (int i = 0; i < sys->m_studentsNum; i++) {
         printf("the %d students name is %9s\n",i,sys->m_studentsList[i]->m_name);
     }
-    int k=friendshipByASCII(sys->m_studentsList[0],sys->m_studentsList[1]));
+
+
+    int k=friendshipByASCII(sys->m_studentsList[0],sys->m_studentsList[1]);
     printf("okay but does THIS work?: the sum is...   %d!!\n",k);
 
-}*/
+}

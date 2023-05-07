@@ -9,8 +9,6 @@
 #define EX1_CLION_FILEHELPER_H
 
 
-
-int max(int a, int b);
 int getMaxLineInFile(FILE* file);
 int getMaxWordInFile(FILE* file);
 int getLineNumInFile(FILE* file);
