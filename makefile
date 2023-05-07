@@ -2,22 +2,23 @@ CC=gcc-12
 OBJS=IsraeliQueue.o tool/HackerEnrollment.o tool/main.o tool/FileHelper.o
 EXEC=prog
 DEBUG=-g
-CFLAGS=-std=c99 -Wall -Werror -pedantic-errors -Itool -I. -lm
+CFLAGS= -Wall -Werror -pedantic-errors -std=c99 -Itool -I. -lm
 
 $(EXEC) : $(OBJS)
-	$(CC) $(CFLAGS) $(DEBUG) $(OBJS) -o $@
+	$(CC) $(DEBUG) $(OBJS) -o $@ $(CFLAGS)
 
 
 IsraeliQueue.o: IsraeliQueue.c IsraeliQueue.h
-	$(CC) -c $(DEBUG) $(CFLAGS) $*.c
+	$(CC) -c $*.c $(DEBUG) $(CFLAGS)
 FileHelper.o: tool/FileHelper.c tool/FileHelper.h
-		$(CC) -c $(DEBUG) $(CFLAGS) $*.c
+	$(CC) -c $*.c $(DEBUG) $(CFLAGS)
 HackerEnrollment.o: tool/HackerEnrollment.c tool/FileHelper.h \
- tool/HackerEnrollment.h tool/../IsraeliQueue.h
-	$(CC) -c $(DEBUG) $(CFLAGS) $*.c
+ tool/HackerEnrollment.h IsraeliQueue.h
+	$(CC) -c $*.c $(DEBUG) $(CFLAGS)
 main.o: tool/main.c tool/HackerEnrollment.h
-	$(CC) -c $(DEBUG) $(CFLAGS) $*.c
+	$(CC) -c $*.c $(DEBUG) $(CFLAGS)
 	
 clean:
 	rm -f $(OBJS) $(EXEC)
 
+#

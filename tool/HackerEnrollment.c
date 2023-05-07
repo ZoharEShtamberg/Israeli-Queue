@@ -4,7 +4,7 @@
 #include <string.h>
 #include "FileHelper.h"
 #include "HackerEnrollment.h"
-#include "../IsraeliQueue.h"
+#include "IsraeliQueue.h"
 
 
 
