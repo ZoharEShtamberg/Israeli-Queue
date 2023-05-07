@@ -702,9 +702,11 @@ void TESTFUNCTION(EnrollmentSystem sys){
         printf("the %d students name is %9s\n",i,sys->m_studentsList[i]->m_name);
     }
     printf("After Ignore Upper:\n");
+    ignoreUpper(newSys);
     for (int i = 0; i < sys->m_studentsNum-1; i++) {
         printf("the %d students name is %9s\n",i,sys->m_studentsList[i]->m_name);
     }
     int k=friendshipByASCII(sys->m_studentsList[0],sys->m_studentsList[1]));
     printf("okay but does THIS work?: the sum is...   %d!!\n",k);
+
 }*/

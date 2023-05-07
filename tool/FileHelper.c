@@ -7,9 +7,10 @@
 #include <assert.h>
 
 
-
-//returns the size of the biggest line in file
-//resets FAP to set
+/**
+ *returns the size of the biggest line in file
+ *resets FAP to set
+ */
 int getMaxLineInFile(FILE* file){
     if(!file){
         return -1; //BAD PARAM
@@ -36,6 +37,10 @@ int getMaxLineInFile(FILE* file){
 }
 
 
+/**
+ *returns the size of the biggest word in file
+ *resets FAP to set
+ */
 int getMaxWordInFile(FILE* file){
     if(!file){
         return -1; //BAD PARAM
@@ -61,6 +66,11 @@ int getMaxWordInFile(FILE* file){
 
 }
 
+
+/**
+ *returns the size of the amount of lines in file
+ *resets FAP to set
+ */
 int getLineNumInFile(FILE* file){
     if(!file){
         return -1; //BAD PARAM
@@ -77,8 +87,10 @@ int getLineNumInFile(FILE* file){
 
 }
 
-//creates new dynamically allocated array of int based on a string of numbers
-//str- string of numbers divided by " "
+
+/**creates new dynamically allocated array of int based on a string of numbers
+ *str- string of numbers divided by " "
+ */
 int *createIntArrayFromStr(char* str){
     assert(str[0]);
     int size= 1,strIndex=0;
@@ -100,6 +112,7 @@ int *createIntArrayFromStr(char* str){
     return newArr;
 }
 
+//TODO change to macro
 int max(int a, int b){
     if (a>b)
         return a;
