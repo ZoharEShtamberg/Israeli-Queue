@@ -83,15 +83,15 @@ static bool areFriends(void* itemA, void* itemB,IsraeliQueue queue){
  * @return: true if they are enemies, false otherwise.
  * */
 static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue){
-	int sum = 0, counter=0,curr;
+	int sum = 0, counter=0,current;
 	double average;
 	FriendshipFunction *list = queue->m_friendshipFunctionList;
 	while(list){
-		curr = (*list)(itemA, itemB);
-		if(curr > queue->m_friendshipThreshold){
+		current = (*list)(itemA, itemB);
+		if(current > queue->m_friendshipThreshold){
 			return false;
 		}
-		sum +=curr;
+		sum +=current;
 		counter++;
 		list++;
 		average = ((double)sum/counter);//inside the loop to avoid dividing by 0
@@ -108,18 +108,18 @@ static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue){
  * should return NULL if and only if head==NULL.
  * */
 static IsraeliItem findFriend(IsraeliQueue queue, void* item){
-	IsraeliItem curr = queue->m_head, friend=NULL, enemy=NULL;
-	if(curr==NULL){	//to avoid de-referencing NULL
+	IsraeliItem current = queue->m_head, friend=NULL, enemy=NULL;
+	if(current==NULL){	//to avoid de-referencing NULL
 		return NULL;
 	}
-	while(curr){	//could be while(1) for all that matters
-		if(areFriends(curr->m_data,item,queue) && curr->m_friendsHelped<FRIEND_QUOTA){
-			friend = curr;//found a friend
-			for(enemy=curr->m_next ; enemy ; enemy=enemy->m_next){
+	while(current){	//could be while(1) for all that matters
+		if(areFriends(current->m_data,item,queue) && current->m_friendsHelped<FRIEND_QUOTA){
+			friend = current;//found a friend
+			for(enemy=current->m_next ; enemy ; enemy=enemy->m_next){
 				if(areEnemies(enemy->m_data, item, queue) &&
 				   		enemy->m_enemiesBlocked < RIVAL_QUOTA){ //found an enemy
 					enemy->m_enemiesBlocked++;
-					curr=enemy;
+					current=enemy;
 					break; //enemy blocked
 				}
 			}
@@ -128,10 +128,10 @@ static IsraeliItem findFriend(IsraeliQueue queue, void* item){
 				return friend;
 			}
 		}
-		if(!curr->m_next){//it's the last one and not a friend
-			return curr;
+		if(!current->m_next){//it's the last one and not a friend
+			return current;
 		}
-		curr=curr->m_next;
+		current=current->m_next;
 	}
 	assert( 0 && "broke loop in find friend");
 	/* this is a weird assert, but I want to prevent this memory leak from happening.
@@ -187,17 +187,17 @@ static IsraeliItem duplicateItemList(IsraeliItem source){
 		copyIsraeliItem(source, last);
 		return last;
 	}
-	IsraeliItem curr = malloc(sizeof(*curr));
-	if(!curr){
+	IsraeliItem current = malloc(sizeof(*current));
+	if(!current){
 		return NULL;
 	}
-	curr->m_next = duplicateItemList(source->m_next);
-	if(curr->m_next == NULL){ //alloc failed down the line
-		free(curr);
+	current->m_next = duplicateItemList(source->m_next);
+	if(current->m_next == NULL){ //alloc failed down the line
+		free(current);
 		return NULL;
 	}
-	copyIsraeliItem(source, curr);
-	return curr;
+	copyIsraeliItem(source, current);
+	return current;
 }
 
 static IsraeliQueueError addFriendshipFunctionsFromList(IsraeliQueue *queueList, IsraeliQueue queue, const unsigned int length){
