@@ -112,10 +112,5 @@ int *createIntArrayFromStr(char* str){
     return newArr;
 }
 
-//TODO change to macro
-int max(int a, int b){
-    if (a>b)
-        return a;
-    return b;
-}
+
 
