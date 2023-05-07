@@ -94,7 +94,7 @@ int getLineNumInFile(FILE* file){
 int *createIntArrayFromStr(char* str){
     assert(str[0]);
     int size= 1,strIndex=0;
-    while(str[strIndex]!='\n'){
+    while(str[strIndex]&&str[strIndex]!='\n'){
         if(str[strIndex]==' '){
             size++;
         }
@@ -112,5 +112,19 @@ int *createIntArrayFromStr(char* str){
     return newArr;
 }
 
-
-
+/*
+ * puts next line in file into provided string. in case of error returns false
+*/
+int putLineFromFileInString(char* str, FILE* file ){
+    assert(file&&str);
+    int i=0;
+    char temp=(char)fgetc(file);
+    while (temp!='\n'&&temp){
+        str[i++]=temp;
+        temp=(char)fgetc(file);
+    }
+    while(str[i]){
+        str[i++]='\0';
+    }
+    return i+1;
+}

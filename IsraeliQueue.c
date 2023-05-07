@@ -284,7 +284,13 @@ void IsraeliQueueDestroy(IsraeliQueue queue){
  * @return: ptr to data or NULL for empty queue
  * frees items memory.*/
 void* IsraeliQueueDequeue(IsraeliQueue queue){
+    if(!queue){
+        return NULL;
+    }
 	IsraeliItem head = queue->m_head;
+    if(!head){
+        return  NULL;
+    }
 	void* data = head->m_data;
 	queue->m_head=head->m_next;
 	free(head);

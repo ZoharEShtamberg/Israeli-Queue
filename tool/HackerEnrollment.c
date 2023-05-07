@@ -69,7 +69,7 @@ Course findCourseByID(Course *courseList, int ID);
 void updateFriendshipFunctions(EnrollmentSystem sys);
 bool insertHackersToQueues(EnrollmentSystem sys);
 Student areAllHackersSatisfied(EnrollmentSystem sys);
-void printQueuesToFile(EnrollmentSystem sys, FILE* outFile);
+//void printQueuesToFile(EnrollmentSystem sys, FILE* outFile);
 
 int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB);
 int friendshipByASCII(void* ptrStudentA, void* ptrStudentB);
@@ -145,16 +145,17 @@ EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
  * */
 EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues){
     assert(sys&&queues);
-    unsigned long maxWord=getMaxWordInFile(queues)+1;
-    char* tempStr=malloc(sizeof(char)* (maxWord));
+    unsigned long maxLine= getMaxLineInFile(queues)+1;
+    char* tempStr=malloc(sizeof(char)* (maxLine));
     if (!tempStr){
         return NULL;//MALLOC FAIL
     }
 	int linesInFile = getLineNumInFile(queues);
     for (int i=0;i < linesInFile;i++){	//:)
-        getline(&tempStr,&maxWord,queues);	//maybe use getline
+        putLineFromFileInString(tempStr,queues);
         char *token= strtok(tempStr," ");
         Course tempCourse=findCourseByID(sys->m_coursesList,atoi(token));
+        assert(tempCourse);
         token= strtok(NULL," ");
         while (token!=NULL){
             Student tempStudent= findStudentByID(sys->m_studentsList,atoi(token));
@@ -284,7 +285,7 @@ Student *createStudentListFromFile(FILE* students, int *length) {
     int maxNameSize = getMaxWordInFile(students), lines = getLineNumInFile(students);
     *length = lines;
     unsigned long maxLineSize=getMaxLineInFile(students);
-    char *tempStr = malloc(sizeof(char) * (maxNameSize+1));
+    char *tempStr = malloc(sizeof(char) * (maxLineSize+1));
     if (!tempStr) {
         return NULL;//MALLOC FAIL
     }
@@ -294,7 +295,7 @@ Student *createStudentListFromFile(FILE* students, int *length) {
         return NULL;//MALLOC FAIL
     }
     for (int k = 0; k < lines; k++) {
-        getline(&tempStr,&maxLineSize,students );
+        putLineFromFileInString(tempStr,students );
         studentList[k] = createStudentFromLine(tempStr, maxNameSize);
         if (!studentList[k]) {
             free(tempStr);
@@ -388,7 +389,7 @@ Course *createCourseListFromFile(FILE* courses, int *length, FriendshipFunction 
             free (tempStr);
             return NULL;//MALLOC FAIL
         }
-        getline(&tempStr,&maxStrLen ,courses);
+        putLineFromFileInString(tempStr,courses);
         courseList[i]->m_number= atoi(strtok(tempStr," "));
         courseList[i]->m_size=atoi(strtok(NULL, " "));
         courseList[i]->m_queue= IsraeliQueueCreate(functionArray,isTheSameStudent,FRIENDSHIP_THR,RIVALRY_THR);
@@ -444,7 +445,7 @@ Hacker createHacker(FILE *hackers, unsigned long *maxLineLen,const Student *stud
     if(!hackers){
         return NULL;//BAD PARM
     }
-    char *tempStr=malloc(sizeof(char)*(*maxLineLen));
+    char *tempStr=malloc(sizeof(char)*(*maxLineLen+1));
     if (!tempStr){
         return NULL;//MALLOC FAIL
     }
@@ -453,11 +454,11 @@ Hacker createHacker(FILE *hackers, unsigned long *maxLineLen,const Student *stud
         free(tempStr);
         return NULL;//MALLOC FAIL;
     }
-    getline(&tempStr,maxLineLen,hackers);
+    putLineFromFileInString(tempStr,hackers);
     newHacker->m_studentCard= findStudentByID(studentList, atoi(tempStr));
     assert(newHacker->m_studentCard);
     //parse line to courses array:
-    getline(&tempStr,maxLineLen,hackers);
+    putLineFromFileInString(tempStr,hackers);
     newHacker->m_preferredCourses= createIntArrayFromStr(tempStr);
     if(!newHacker->m_preferredCourses){
         free(tempStr);
@@ -465,10 +466,12 @@ Hacker createHacker(FILE *hackers, unsigned long *maxLineLen,const Student *stud
         return NULL; //MALLOC FAIL
     }
     int k=0;
-    while( newHacker->m_preferredCourses[k++]);
-    newHacker->m_preferredCoursesSize=k;
+    while( newHacker->m_preferredCourses[k]){
+        k++;
+    }
+    newHacker->m_preferredCoursesSize=k-1;
     //parse line to friends array:
-    getline(&tempStr,maxLineLen,hackers);
+    putLineFromFileInString(tempStr,hackers);
     newHacker->m_studentCard->m_friendsList=createIntArrayFromStr(tempStr);
     if(!newHacker->m_studentCard->m_friendsList){
         free(tempStr);
@@ -477,7 +480,7 @@ Hacker createHacker(FILE *hackers, unsigned long *maxLineLen,const Student *stud
         return NULL; //MALLOC FAIL
     }
     //parse line to enemies array:
-    getline(&tempStr,maxLineLen,hackers);
+    putLineFromFileInString(tempStr,hackers);
     newHacker->m_studentCard->m_enemiesList=createIntArrayFromStr(tempStr);
     free(tempStr);
     if(!newHacker->m_studentCard->m_enemiesList){
@@ -740,3 +743,4 @@ void TESTFUNCTION(EnrollmentSystem sys){
     printf("okay but does THIS work?: the sum is...   %d!!\n",k);
 
 }
+
