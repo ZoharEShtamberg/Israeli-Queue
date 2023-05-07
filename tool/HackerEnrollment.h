@@ -64,6 +64,7 @@ int isTheSameStudent(void* stuA, void* stuB);
 
 //TODO this shouldn't be in the final version
 void TESTFUNCTION(EnrollmentSystem sys);
+void printQueuesToFile(EnrollmentSystem sys, FILE* outFile);
 
 
 #endif
