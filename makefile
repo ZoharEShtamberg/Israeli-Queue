@@ -11,11 +11,13 @@ $(EXEC) : $(OBJS)
 IsraeliQueue.o: IsraeliQueue.c IsraeliQueue.h
 	$(CC) -c $(DEBUG) $(CFLAGS) $*.c
 FileHelper.o: tool/FileHelper.c tool/FileHelper.h
-	$(CC) -c $(DEBUG) $(CFLAGS) $*.c
-HackerEnrollment.o: tool/HackerEnrollment.c IsraeliQueue.h tool/FileHelper.h
+		$(CC) -c $(DEBUG) $(CFLAGS) $*.c
+HackerEnrollment.o: tool/HackerEnrollment.c tool/FileHelper.h \
+ tool/HackerEnrollment.h tool/../IsraeliQueue.h
 	$(CC) -c $(DEBUG) $(CFLAGS) $*.c
 main.o: tool/main.c tool/HackerEnrollment.h
 	$(CC) -c $(DEBUG) $(CFLAGS) $*.c
+	
 clean:
 	rm -f $(OBJS) $(EXEC)
 
