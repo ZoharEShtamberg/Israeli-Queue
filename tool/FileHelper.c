@@ -77,17 +77,10 @@ int getLineNumInFile(FILE* file){
         return -1; //BAD PARAM
     }
     int lineCounter=0;
-    char tempC=1;
-    bool previousLineDown=false;
+    char tempC;
     while ((tempC=(char)fgetc(file))!=EOF){
-        if(tempC=='\n'){
-            if(!previousLineDown){
-                previousLineDown=true;
-                lineCounter++;
-            }
-        }
-        else{
-            previousLineDown=false;
+        if(tempC=='\n') {
+            lineCounter++;
         }
     }
     fseek(file, 0, SEEK_SET);
@@ -119,11 +112,11 @@ int *createIntArrayFromStr(char* str){
     return newArr;
 }
 
-/*
- * assumes str has enough space for next line
- * puts next line in file into provided string. in case of error returns false
- * returns amount of chars copied
-*/
+///*
+// * assumes str has enough space for next line
+// * puts next line in file into provided string. in case of error returns false
+// * returns amount of chars copied
+//*/
 int putLineFromFileInString(char* str, FILE* file ){
     assert(file&&str);
     int i=0;
