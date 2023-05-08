@@ -120,32 +120,35 @@ int *createIntArrayFromStr(char* str){
 }
 
 /*
+ * assumes str has enough space for next line
  * puts next line in file into provided string. in case of error returns false
+ * returns amount of chars copied
 */
 int putLineFromFileInString(char* str, FILE* file ){
     assert(file&&str);
     int i=0;
     char temp=(char)fgetc(file);
-    while (temp!='\n'&&temp){
+    while (temp&&temp!='\n'){
         str[i++]=temp;
         temp=(char)fgetc(file);
     }
-    while(str[i]){
-        str[i++]='\0';
+    if (i!=0){
+        str[i]='\0';
     }
-    return i+1;
+    return i;
 }
+
 /**
  * returns distance to next word in srcStr to destStr, returns -1 if
  * USER responsible to make sure there is enough space!
- * @ returns length of word '\0'
+ * @ returns amount of characters in a word
  *
  */
 int getNextWordLength(const char* srcStr){
-    int i=-1;
-    while(srcStr[i+1]){
-        if (srcStr[i+1]==' '||srcStr[i+1]=='\n'||srcStr[i+1]=='\0'){
-            return i+1;
+    int i=0;
+    while(srcStr[i]){
+        if (srcStr[i]==' '||srcStr[i]=='\n'||srcStr[i]=='\0'){
+            return i-1;
         }
         i++;
     }

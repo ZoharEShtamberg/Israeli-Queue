@@ -401,9 +401,8 @@ Course *createCourseListFromFile(FILE* courses, int *length, FriendshipFunction 
             return NULL;//MALLOC FAIL
         }
 
-
-        courseList[i]->m_number= atoi(strtok(tempStr," "));
-        courseList[i]->m_size=atoi(strtok(NULL, " "));
+        int check=sscanf(tempStr,"%d %d",&courseList[i]->m_number, &courseList[i]->m_size);
+        assert(check==2);//if fail wrong format or question parameters
         courseList[i]->m_queue= IsraeliQueueCreate(functionArray,isTheSameStudent,FRIENDSHIP_THR,RIVALRY_THR);
         if (!courseList[i]->m_queue){
             destroyCoursesList(courseList,i);
@@ -466,34 +465,47 @@ Hacker createHacker(FILE *hackers, const unsigned long *maxLineLen,const Student
     }
     putLineFromFileInString(tempStr,hackers);
     newHacker->m_studentCard= findStudentByID(studentList, atoi(tempStr));
-    assert(newHacker->m_studentCard);
+    assert(newHacker->m_studentCard);//hacker must be in student file
     //parse line to courses array:
-    putLineFromFileInString(tempStr,hackers);
-    newHacker->m_preferredCourses= createIntArrayFromStr(tempStr);
-    if(!newHacker->m_preferredCourses){
-        free(tempStr);
-        free(newHacker);
-        return NULL; //MALLOC FAIL
-    }
 
+    if(putLineFromFileInString(tempStr,hackers)==0){
+        newHacker->m_preferredCourses= NULL;
+    }
+    else{
+        newHacker->m_preferredCourses= createIntArrayFromStr(tempStr);
+        if (!newHacker->m_preferredCourses){
+            free(tempStr);
+            free(newHacker);
+            return NULL;
+        }
+    }
     //parse line to friends array:
-    putLineFromFileInString(tempStr,hackers);
-    newHacker->m_studentCard->m_friendsList=createIntArrayFromStr(tempStr);
-    if(!newHacker->m_studentCard->m_friendsList){
-        free(tempStr);
-        free(newHacker->m_preferredCourses);
-        free(newHacker);
-        return NULL; //MALLOC FAIL
+    if(putLineFromFileInString(tempStr,hackers)==0){
+        newHacker->m_studentCard->m_friendsList=NULL;
+    } else{
+        newHacker->m_studentCard->m_friendsList=createIntArrayFromStr(tempStr);
+        if(!newHacker->m_studentCard->m_friendsList){
+            free(tempStr);
+            free(newHacker->m_preferredCourses);
+            free(newHacker);
+            return NULL; //MALLOC FAIL
+        }
     }
     //parse line to enemies array:
-    putLineFromFileInString(tempStr,hackers);
-    newHacker->m_studentCard->m_enemiesList=createIntArrayFromStr(tempStr);
-    free(tempStr);
-    if(!newHacker->m_studentCard->m_enemiesList){
-        free(newHacker->m_studentCard->m_friendsList);
-        free(newHacker);
-        return NULL; //MALLOC FAIL
+    if(putLineFromFileInString(tempStr,hackers)==0){
+        newHacker->m_studentCard->m_enemiesList=NULL;
     }
+    else {
+        newHacker->m_studentCard->m_enemiesList=createIntArrayFromStr(tempStr);
+        if(!newHacker->m_studentCard->m_enemiesList){
+            free(newHacker->m_studentCard->m_friendsList);
+            free(newHacker->m_preferredCourses);
+            free(newHacker);
+            free(tempStr);
+            return NULL; //MALLOC FAIL
+        }
+    }
+    free(tempStr);
     return newHacker;
 }
 
@@ -501,16 +513,6 @@ Hacker createHacker(FILE *hackers, const unsigned long *maxLineLen,const Student
 //=======================================================
 //READ AND HACK FUNCTIONS
 //=======================================================
-/**
- * swaps two student pointers
- */
-void swap(Student *studentA,Student *studentB){
-    Student temp1=*studentA;
-    *studentA=*studentB;
-    *studentB=temp1;
-}
-
-
 /**
  * finds relevant course and returns a pointer to it, NULL if not found in List
  */
@@ -590,6 +592,9 @@ void updateFriendshipFunctions(EnrollmentSystem sys) {
 bool insertHackersToQueues(EnrollmentSystem sys){
     assert(sys);
     for (int i=0; i<sys->m_hackersNum;i++) {
+        if(!sys->m_hackersList[i]->m_preferredCourses){
+            continue;
+        }
         int k=0;
         while(sys->m_hackersList[i]->m_preferredCourses[k]) {
             Course tempCourse = findCourseByID(sys->m_coursesList, sys->m_hackersList[i]->m_preferredCourses[k++]);
@@ -612,7 +617,12 @@ bool insertHackersToQueues(EnrollmentSystem sys){
 Student areAllHackersSatisfied( EnrollmentSystem sys){
     assert(sys);
     int hackerIndex =0;
+
     while(sys->m_hackersList[hackerIndex]){
+
+        if(!sys->m_hackersList[hackerIndex]->m_preferredCourses){
+            continue;
+        }
         int failCount=0,courseIndex=0;
         int hackerId=sys->m_hackersList[hackerIndex]->m_studentCard->m_studentID;
 
@@ -631,7 +641,6 @@ Student areAllHackersSatisfied( EnrollmentSystem sys){
             }
 
             Student tempStudent= IsraeliQueueDequeue(tempQueue);
-
             while(tempStudent){
                 positionInLine++;
                 if(tempStudent->m_studentID==hackerId){
@@ -655,6 +664,7 @@ Student areAllHackersSatisfied( EnrollmentSystem sys){
         }
         hackerIndex++;
     }
+
     return NULL;
 }
 
@@ -668,28 +678,41 @@ Student areAllHackersSatisfied( EnrollmentSystem sys){
 //checks two Student Types if either are friends/enemies of each-other
 int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB){
     assert(ptrStudentA&&ptrStudentB);
-    Student studentA=(Student)ptrStudentA, studentB=(Student)ptrStudentB;
+    const Student studentA=(Student)ptrStudentA;
+    const Student studentB=(Student)ptrStudentB;
     int i=0;
-    for(int k=0;k<2;k++){ //checks for both students
-        if(studentA->m_friendsList){
-            while(studentA->m_friendsList[i]){
-                if (studentA->m_friendsList[i++]==(studentB->m_studentID)){
-                    return FRIENDSHIP_THR;
-                }
+    if(studentA->m_friendsList){
+        while(studentA->m_friendsList[i]){
+            if (studentA->m_friendsList[i++]==(studentB->m_studentID)){
+                return FRIENDSHIP_THR;
             }
         }
-        i=0;
-        if(studentA->m_friendsList){
-            while(studentA->m_enemiesList[i]!=0){
-                if (studentA->m_enemiesList[i++]==(studentB->m_studentID)){
-                    return RIVALRY_THR;
-                }
-            }
-        }
-        i=0;
-        swap(&studentA,&studentB);
     }
-
+    i=0;
+    if(studentA->m_friendsList){
+        while(studentA->m_enemiesList[i]!=0){
+            if (studentA->m_enemiesList[i++]==(studentB->m_studentID)){
+                return RIVALRY_THR;
+            }
+        }
+    }
+    i=0;
+    //checks for both students
+    if(studentB->m_friendsList){
+        while(studentB->m_friendsList[i]){
+            if (studentB->m_friendsList[i++]==(studentA->m_studentID)){
+                return 20;
+            }
+        }
+    }
+    i=0;
+    if(studentB->m_friendsList){
+        while(studentB->m_enemiesList[i]!=0){
+            if (studentB->m_enemiesList[i++]==(studentA->m_studentID)){
+                return -20;
+            }
+        }
+    }
     return 0;
 }
 
