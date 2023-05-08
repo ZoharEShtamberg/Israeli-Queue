@@ -6,6 +6,8 @@
 #include <math.h>
 #include "IsraeliQueue.h"
 
+#define ABS(X) (X) >= 0 ? (X): -1*(X)
+
 
 //=================================================================
 /*typedefs & struct declaration*/
@@ -449,7 +451,7 @@ IsraeliQueue IsraeliQueueMerge(IsraeliQueue* queueList , ComparisonFunction comp
 		}
 	}
 	assert(queuesNum);	//already checked but i wanna be sure
-	int rivalryThreshold = ceil(pow(rivalryMultiply, 1/queuesNum));
+	int rivalryThreshold = ceil(pow(ABS(rivalryMultiply), 1/queuesNum));
 	int friendshipThreshold = ceil(friendSum/queuesNum);
 
 	FriendshipFunction arr[1] = {NULL};	//we need to give em something
