@@ -58,6 +58,9 @@ static FriendshipFunction* duplicateFuncArray(FriendshipFunction *friendshipFunc
 		size++;
 	}
 	FriendshipFunction* newList = malloc((size+1)* sizeof(FriendshipFunction));
+	if(!newList){
+		return NULL;	//alloc failed
+	}
 	for(int i=0;i<size;i++){
 		newList[i]=friendshipFunctionList_In[i];
 	}
@@ -275,6 +278,9 @@ IsraeliQueueError IsraeliQueueEnqueue(IsraeliQueue queue, void *data){
 /*destroy function:*/
 //=================================================================
 void IsraeliQueueDestroy(IsraeliQueue queue){
+	if(!queue){
+		return;
+	}
 	free(queue->m_friendshipFunctionList); //destroy func arr
 	destroyIsraeliList(queue->m_head);		//destroy israeli items in queue
 	free(queue);		//destroy queue struct
@@ -294,7 +300,7 @@ void* IsraeliQueueDequeue(IsraeliQueue queue){
         return  NULL;
     }
 	void* data = head->m_data;
-	queue->m_head=head->m_next;
+	queue->m_head=head->m_next;	
 	free(head);
 	return data;
 }
