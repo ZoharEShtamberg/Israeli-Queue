@@ -1,8 +1,8 @@
-CC=gcc-12
+CC=gcc
 OBJS=IsraeliQueue.o tool/HackerEnrollment.o tool/main.o tool/FileHelper.o
-EXEC=prog
+EXEC=HackEnrollment
 DEBUG=-g
-CFLAGS= -Wall -Werror -pedantic-errors -std=c99 -Itool -I. -lm
+CFLAGS= -Wall -Werror -pedantic-errors -std=c99 -Itool -I/new_home/courses/mtm/public/2223b/ex1 -lm
 
 $(EXEC) : $(OBJS)
 	$(CC) $(DEBUG) $(OBJS) -o $@ $(CFLAGS)
