@@ -28,6 +28,7 @@ int getMaxLineInFile(FILE* file){
             tempMaxLine=0;
         }
     }
+
     if (tempMaxLine>maxLine){
         maxLine=tempMaxLine;
     }
@@ -76,15 +77,21 @@ int getLineNumInFile(FILE* file){
         return -1; //BAD PARAM
     }
     int lineCounter=0;
-    char tempC;
+    char tempC=1;
+    bool previousLineDown=false;
     while ((tempC=(char)fgetc(file))!=EOF){
         if(tempC=='\n'){
-            lineCounter++;
+            if(!previousLineDown){
+                previousLineDown=true;
+                lineCounter++;
+            }
+        }
+        else{
+            previousLineDown=false;
         }
     }
     fseek(file, 0, SEEK_SET);
     return lineCounter;
-
 }
 
 
@@ -127,4 +134,20 @@ int putLineFromFileInString(char* str, FILE* file ){
         str[i++]='\0';
     }
     return i+1;
+}
+/**
+ * returns distance to next word in srcStr to destStr, returns -1 if
+ * USER responsible to make sure there is enough space!
+ * @ returns length of word '\0'
+ *
+ */
+int getNextWordLength(const char* srcStr){
+    int i=-1;
+    while(srcStr[i+1]){
+        if (srcStr[i+1]==' '||srcStr[i+1]=='\n'||srcStr[i+1]=='\0'){
+            return i+1;
+        }
+        i++;
+    }
+    return i;
 }

@@ -18,53 +18,50 @@ typedef struct Course_t *Course;
  * 
  * FriendshipFunction array is initialized to null.
  * returns a pointer to the function-memory must be freed by destroyEnrollment
- * in case of failure returns null-memory handled in function
+ * in case of failure returns null-memory allocations handled by callee
  *
  * */
 EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers);
 
+
 /**Reads Enrollment queues and updates the relevant m_coursesList item accordingly
  * @param queues: <course number> <ID>...<ID>\n
- *
  * CAUTION: in case of error returns NULL, USER  is responsible to BACK UP original system pointer!!!
- *
+ * returns the pointer to the same Enrollment system upon successful read
  * */
 EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues);
 
 
 /**Updates all queues to IsraeliQueues
- * assumes sys and file parameters are all correct!
- *
- * in cade of error prints out "help!!"
+ * assumes sys and file values are all correct!
+ * if all hackers are satisfied prints new queues
+ * if not prints first hacker on list that isn't
  * */
 void hackEnrollment(EnrollmentSystem sys, FILE* out);
 
 
 
-
 /**
- * switches to lower case
+ * switches names to lower case
+ * @param sys must have filled in students list
  */
-
 void ignoreUpper(EnrollmentSystem sys);
 
 
 
 /**
- * destroyEnrollment
+ * destroysEnrollment-all allocated memory that isn't set to null is freed
  */
  void destroyEnrollment(EnrollmentSystem sys);
 
 
 /**
  * returns 1 if equal and 0 if not
+ * @param stuA,stuB must be pointers to valid students
  */
-int isTheSameStudent(void* stuA, void* stuB);
+int isTheSameStudent(void* ptrA, void* ptrB);
 
 
-//TODO this shouldn't be in the final version
-void TESTFUNCTION(EnrollmentSystem sys);
-void printQueuesToFile(EnrollmentSystem sys, FILE* outFile);
 
 
 #endif

@@ -14,5 +14,6 @@ int getMaxWordInFile(FILE* file);
 int getLineNumInFile(FILE* file);
 int *createIntArrayFromStr(char *str);
 int putLineFromFileInString(char* str, FILE* file);
+int getNextWordLength(const char* srcStr);
 
 #endif //EX1_CLION_FILEHELPER_H
