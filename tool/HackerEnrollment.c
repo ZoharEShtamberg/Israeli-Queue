@@ -443,7 +443,7 @@ Hacker *createHackersListFromFile(FILE* hackers, EnrollmentSystem newSys){
     }
 
 
-    int bufferSize=getMaxLineInFile(hackers);
+    int bufferSize=getMaxLineInFile(hackers)+1;
     for (int i=0;i<(newSys->m_hackersNum);i++){
         hackerList[i]= createHacker(hackers,newSys,bufferSize);
         if(!hackerList[i]){
@@ -636,7 +636,7 @@ Student areAllHackersSatisfied( EnrollmentSystem sys){
 
         if(sys->m_hackersList[i]->m_preferredCourses==0){
             continue;
-        }
+        } //jump if no wanted courses
 
         int failCount=0;
         int hackerId=sys->m_hackersList[i]->m_studentCard->m_studentID;
@@ -671,7 +671,7 @@ Student areAllHackersSatisfied( EnrollmentSystem sys){
             IsraeliQueueDestroy(tempQueue);
         }//check for fails
 
-        if(sys->m_hackersList[i]->m_coursesNum-failCount < MIN(2 , sys->m_hackersList[i]->m_coursesNum)){
+        if((sys->m_hackersList[i]->m_coursesNum)-failCount < 2||(failCount==sys->m_hackersList[i]->m_coursesNum)){
             return sys->m_hackersList[i]->m_studentCard;
 
         }
