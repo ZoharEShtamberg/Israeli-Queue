@@ -172,7 +172,7 @@ void hackEnrollment(EnrollmentSystem sys, FILE* out){
     }
     Student firstHackerUnsatisfied= areAllHackersSatisfied(sys);
     if(firstHackerUnsatisfied){
-        printQueuesToFile(sys, out);
+        printQueuesToFile(sys, out);//TODO
         fprintf(out, "Cannot satisfy constraints for %*d\n",ID_LENGTH,firstHackerUnsatisfied->m_studentID);
         return;
     }
