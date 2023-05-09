@@ -37,7 +37,7 @@ struct Student_t{
 };
 
 struct Hacker_t{
-    int  *m_preferredCourses;
+    int* m_preferredCourses;
     Student m_studentCard;
 
 };
@@ -228,6 +228,7 @@ void destroyStudentList(Student *List,int length){
         }
     free(List);
 }
+
 
 void destroyCoursesList(Course *List,int length){
     if(!List){
@@ -474,7 +475,7 @@ Hacker createHacker(FILE *hackers, const unsigned long *maxLineLen,const Student
         newHacker->m_preferredCourses= NULL;
     }
     else{
-        newHacker->m_preferredCourses= createIntArrayFromStr(tempStr);
+        newHacker->m_preferredCourses = createIntArrayFromStr(tempStr);
         if (!newHacker->m_preferredCourses){
             free(tempStr);
             free(newHacker);
