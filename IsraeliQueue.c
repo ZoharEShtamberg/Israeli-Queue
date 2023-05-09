@@ -113,22 +113,20 @@ static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue){
  * should return NULL if and only if head==NULL.
  * */
 static IsraeliItem findFriend(IsraeliQueue queue, void* item){
-	IsraeliItem current = queue->m_head, friend=NULL, enemy=NULL;
-	if(current==NULL){	//to avoid de-referencing NULL
-		return NULL;
-	}
+	assert(queue);
+	IsraeliItem current = queue->m_head, friend=NULL;
 	while(current){	//could be while(1) for all that matters
 		if(areFriends(current->m_data,item,queue) && current->m_friendsHelped<FRIEND_QUOTA){
 			friend = current;//found a friend
-			for(enemy=current->m_next ; enemy ; enemy=enemy->m_next){
-				if(areEnemies(enemy->m_data, item, queue) &&
-				   		enemy->m_enemiesBlocked < RIVAL_QUOTA){ //found an enemy
-					enemy->m_enemiesBlocked++;
-					current=enemy;
+			//check if curr is last
+			for(current=current->m_next ; current ; current=current->m_next){
+				if(areEnemies(current->m_data, item, queue) &&
+				   		current->m_enemiesBlocked < RIVAL_QUOTA){ //found an enemy
+					current->m_enemiesBlocked++;
 					break; //enemy blocked
 				}
 			}
-			if(!enemy){ //means no enemy blocked
+			if(!current){ //means no enemy blocked
 				friend->m_friendsHelped++;
 				return friend;
 			}
@@ -138,11 +136,6 @@ static IsraeliItem findFriend(IsraeliQueue queue, void* item){
 		}
 		current=current->m_next;
 	}
-	assert( 0 && "broke loop in find friend");
-	/* this is a weird assert, but I want to prevent this memory leak from happening.
-	 * this line should not be reached. it's ugly, but I did it that way
-	 * because of the stupid requirement for friends who are last in line to count as a friend insertion.
-	 * */
 	return NULL;
 }
 
