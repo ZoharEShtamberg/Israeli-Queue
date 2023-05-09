@@ -59,15 +59,15 @@ struct EnrollmentSystem_t{
 Student *createStudentListFromFile(FILE* students, int *length);
 Student createStudentFromLine(char* str,int maxWord);
 Course *createCourseListFromFile(FILE* courses, int *length,FriendshipFunction *functionArray);
-Hacker *createHackersListFromFile(FILE* hackers, int *length, const Student *studentList,int maxArrayNum);
-Hacker createHacker(FILE *hackers, const unsigned long *maxLineLen,const Student *studentList);
+Hacker *createHackersListFromFile(FILE* hackers, EnrollmentSystem newSys);
+Hacker createHacker(FILE *hackers, EnrollmentSystem sys);
 
 void destroyStudentList(Student *List,int length);
 void destroyCoursesList(Course *List,int length);
 void destroyHackersList(Hacker *List,int length);
 
-Student findStudentByID(const Student *studentList, int ID);
-Course findCourseByID(Course *courseList, int ID);
+Student findStudentByID(const Student *studentList, int ID, int size);
+Course findCourseByID(Course *courseList, int ID, int size);
 
 void updateFriendshipFunctions(EnrollmentSystem sys);
 bool insertHackersToQueues(EnrollmentSystem sys);
@@ -122,7 +122,7 @@ EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
         return NULL;//CREATE FAIL
     }
     int maxArr=MAX(newSys->m_coursesNum,newSys->m_studentsNum);
-    newSys->m_hackersList= createHackersListFromFile(hackers,&(newSys->m_hackersNum),newSys->m_studentsList, maxArr);
+    newSys->m_hackersList= createHackersListFromFile(hackers,newSys);
     if (!newSys->m_hackersList){
         destroyEnrollment(newSys);
         return NULL;//CREATE FAIL
@@ -145,11 +145,11 @@ EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues){
     for (int i=0;i < linesInFile;i++){	//:)
         putLineFromFileInString(tempStr,queues);
         char *token= strtok(tempStr," ");
-        Course tempCourse=findCourseByID(sys->m_coursesList,atoi(token));
+        Course tempCourse=findCourseByID(sys->m_coursesList,atoi(token),sys->m_coursesNum);
         assert(tempCourse);
         token= strtok(NULL," ");
         while (token!=NULL){
-            Student tempStudent= findStudentByID(sys->m_studentsList,atoi(token));
+            Student tempStudent= findStudentByID(sys->m_studentsList,atoi(token),sys->m_studentsNum);
             IsraeliQueueEnqueue(tempCourse->m_queue,tempStudent);
             token= strtok(NULL," ");
         }
@@ -429,24 +429,24 @@ Course *createCourseListFromFile(FILE* courses, int *length, FriendshipFunction 
  *  in case of failure returns NULL
  *  destroys itself upon failure in create
  */
-Hacker *createHackersListFromFile(FILE* hackers, int *length, const Student *studentList, int maxArrayNum){
-    assert(hackers&&studentList&&(maxArrayNum>0));
+Hacker *createHackersListFromFile(FILE* hackers, EnrollmentSystem newSys){
+    assert(hackers&&newSys);
     unsigned long maxLineLen= getMaxLineInFile(hackers)+1;
-    *length=getLineNumInFile(hackers)/4;
-    Hacker *hackerList=malloc(sizeof(Hacker)*(*length+1));
+    newSys->m_hackersNum=getLineNumInFile(hackers)/4;
+
+    Hacker *hackerList=malloc(sizeof(Hacker)*(newSys->m_hackersNum+1));
     if(!hackerList){
         return NULL;//MALLOC FAIL
     }
 
 
-    for (int i=0;i<(*length);i++){
-        hackerList[i]= createHacker(hackers,&maxLineLen, studentList);
+    for (int i=0;i<(newSys->m_hackersNum);i++){
+        hackerList[i]= createHacker(hackers,newSys);
         if(!hackerList[i]){
             destroyHackersList(hackerList,i);
             return NULL;
         }
     }
-    hackerList[*length]=NULL;
     return hackerList;
 }
 
@@ -455,11 +455,12 @@ Hacker *createHackersListFromFile(FILE* hackers, int *length, const Student *stu
  *in case of failure returns null
  * doesnt destroy memory allocations that belong to new sys upon failure-destroy function responsibility
  */
-Hacker createHacker(FILE *hackers, const unsigned long *maxLineLen,const Student *studentList){
-    if(!hackers){
+Hacker createHacker(FILE *hackers, EnrollmentSystem sys){
+    if(!hackers||!sys){
         return NULL;//BAD PARM
     }
-    char *tempStr=malloc(sizeof(char)* ((*maxLineLen)+1) );
+    int befferSize= getMaxLineInFile(hackers);
+    char *tempStr=malloc(sizeof(char)* ((befferSize)+1) );
     if (!tempStr){
         return NULL;//MALLOC FAIL
     }
@@ -469,7 +470,7 @@ Hacker createHacker(FILE *hackers, const unsigned long *maxLineLen,const Student
         return NULL;//MALLOC FAIL;
     }
     putLineFromFileInString(tempStr,hackers);
-    newHacker->m_studentCard= findStudentByID(studentList, atoi(tempStr));
+    newHacker->m_studentCard= findStudentByID(sys->m_studentsList, atoi(tempStr),sys->m_studentsNum);
     assert(newHacker->m_studentCard);//hacker must be in student file
     //parse line to courses array:
 
@@ -521,14 +522,12 @@ Hacker createHacker(FILE *hackers, const unsigned long *maxLineLen,const Student
 /**
  * finds relevant course and returns a pointer to it, NULL if not found in List
  */
-Course findCourseByID(Course *courseList, int ID){
+Course findCourseByID(Course *courseList, int ID,int size){
     assert(courseList);
-    int i=0;
-    while(courseList[i]!=NULL){
+    for(int i=0;i<size;i++){
         if (courseList[i]->m_number==ID){
             return courseList[i];
         }
-        i++;
     }
     return NULL;
 }
@@ -537,16 +536,15 @@ Course findCourseByID(Course *courseList, int ID){
 /**
  * finds relevant student and returns a pointer to it, NULL if not found in List
  */
-Student findStudentByID(const Student *studentList, int ID){
+Student findStudentByID(const Student *studentList, int ID, int size){
     if(!studentList){
         return NULL;//BAD PARAM
     }
-    int i=0;
-    while(studentList[i]!=NULL){
+    for (int i=0;i<size;i++){
         if(studentList[i]->m_studentID==ID){
             return studentList[i];
         }
-        i++;
+
     }
     return NULL;
 }
@@ -609,7 +607,7 @@ bool insertHackersToQueues(EnrollmentSystem sys){
             continue;
         }
         for (int j = 0; j < sys->m_hackersList[i]->m_coursesNum; ++j) {
-            Course tempCourse = findCourseByID(sys->m_coursesList, sys->m_hackersList[i]->m_preferredCourses[j]);
+            Course tempCourse = findCourseByID(sys->m_coursesList, sys->m_hackersList[i]->m_preferredCourses[j],sys->m_coursesNum);
             assert(tempCourse);
             if (IsraeliQueueEnqueue(tempCourse->m_queue,sys->m_hackersList[i]->m_studentCard)!=ISRAELIQUEUE_SUCCESS) {
                 return false;
@@ -642,7 +640,7 @@ Student areAllHackersSatisfied( EnrollmentSystem sys){
 
             int courseNumber=sys->m_hackersList[i]->m_preferredCourses[j], positionInLine=0;
 
-            Course tempCourse = findCourseByID(sys->m_coursesList,courseNumber );
+            Course tempCourse = findCourseByID(sys->m_coursesList,courseNumber,sys->m_coursesNum );
             assert(tempCourse);
             IsraeliQueue tempQueue= IsraeliQueueClone(tempCourse->m_queue);
             assert(tempQueue);
