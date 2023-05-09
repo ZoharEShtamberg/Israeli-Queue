@@ -92,7 +92,7 @@ int getLineNumInFile(FILE* file){
  *str- string of numbers divided by " "
  * assumes line has at least one word
  */
-int *createIntArrayFromStr(char* str){
+int *createIntArrayFromStr(char* str, int* length){
     assert(str[0]);
     int size= 1,strIndex=0;
     while(str[strIndex]&&str[strIndex]!='\n'){
@@ -101,7 +101,8 @@ int *createIntArrayFromStr(char* str){
         }
         strIndex++;
     }
-    int *newArr= (int*)malloc(sizeof (int)*(size+1));
+    *length=size;
+    int *newArr= (int*)malloc(sizeof (int)*(size));
     if (!newArr){
         return NULL;
     }
@@ -111,7 +112,7 @@ int *createIntArrayFromStr(char* str){
         newArr[i]=atoi(token);
         token= strtok(NULL, " ");
     }
-    newArr[size]=0;
+
 
 
     return newArr;

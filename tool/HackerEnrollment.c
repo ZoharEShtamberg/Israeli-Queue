@@ -34,10 +34,12 @@ struct Student_t{
     int m_studentID;
     char *m_name;
     int *m_friendsList, *m_enemiesList;
+    int m_friendsNum, m_enemiesNum;
 };
 
 struct Hacker_t{
     int* m_preferredCourses;
+    int m_coursesNum;
     Student m_studentCard;
 
 };
@@ -475,7 +477,7 @@ Hacker createHacker(FILE *hackers, const unsigned long *maxLineLen,const Student
         newHacker->m_preferredCourses= NULL;
     }
     else{
-        newHacker->m_preferredCourses = createIntArrayFromStr(tempStr);
+        newHacker->m_preferredCourses = createIntArrayFromStr(tempStr, &newHacker->m_coursesNum);
         if (!newHacker->m_preferredCourses){
             free(tempStr);
             free(newHacker);
@@ -486,7 +488,7 @@ Hacker createHacker(FILE *hackers, const unsigned long *maxLineLen,const Student
     if(putLineFromFileInString(tempStr,hackers)==0){
         newHacker->m_studentCard->m_friendsList=NULL;
     } else{
-        newHacker->m_studentCard->m_friendsList=createIntArrayFromStr(tempStr);
+        newHacker->m_studentCard->m_friendsList=createIntArrayFromStr(tempStr,&newHacker->m_studentCard->m_friendsNum);
         if(!newHacker->m_studentCard->m_friendsList){
             free(tempStr);
             free(newHacker->m_preferredCourses);
@@ -499,7 +501,7 @@ Hacker createHacker(FILE *hackers, const unsigned long *maxLineLen,const Student
         newHacker->m_studentCard->m_enemiesList=NULL;
     }
     else {
-        newHacker->m_studentCard->m_enemiesList=createIntArrayFromStr(tempStr);
+        newHacker->m_studentCard->m_enemiesList=createIntArrayFromStr(tempStr,&newHacker->m_studentCard->m_enemiesNum);
         if(!newHacker->m_studentCard->m_enemiesList){
             free(newHacker->m_studentCard->m_friendsList);
             free(newHacker->m_preferredCourses);
@@ -606,9 +608,8 @@ bool insertHackersToQueues(EnrollmentSystem sys){
         if(!sys->m_hackersList[i]->m_preferredCourses){
             continue;
         }
-        int k=0;
-        while(sys->m_hackersList[i]->m_preferredCourses[k]) {
-            Course tempCourse = findCourseByID(sys->m_coursesList, sys->m_hackersList[i]->m_preferredCourses[k++]);
+        for (int j = 0; j < sys->m_hackersList[i]->m_coursesNum; ++j) {
+            Course tempCourse = findCourseByID(sys->m_coursesList, sys->m_hackersList[i]->m_preferredCourses[j]);
             assert(tempCourse);
             if (IsraeliQueueEnqueue(tempCourse->m_queue,sys->m_hackersList[i]->m_studentCard)!=ISRAELIQUEUE_SUCCESS) {
                 return false;
@@ -627,27 +628,25 @@ bool insertHackersToQueues(EnrollmentSystem sys){
  */
 Student areAllHackersSatisfied( EnrollmentSystem sys){
     assert(sys);
-    int hackerIndex =0;
+    //hacker loop:
+    for(int i=0;i<sys->m_hackersNum;i++){
 
-    while(sys->m_hackersList[hackerIndex]){
-
-        if(!sys->m_hackersList[hackerIndex]->m_preferredCourses){
-            hackerIndex++;
+        if(!sys->m_hackersList[i]->m_preferredCourses){
             continue;
         }
-        int failCount=0,courseIndex=0;
-        int hackerId=sys->m_hackersList[hackerIndex]->m_studentCard->m_studentID;
 
-        while(sys->m_hackersList[hackerIndex]->m_preferredCourses[courseIndex]){
+        int failCount=0;
+        int hackerId=sys->m_hackersList[i]->m_studentCard->m_studentID;
+        //courses loop:
+        for (int j=0; j < sys->m_hackersList[i]->m_coursesNum; j++) {
 
-            int courseNumber=sys->m_hackersList[hackerIndex]->m_preferredCourses[courseIndex], positionInLine=0;
+            int courseNumber=sys->m_hackersList[i]->m_preferredCourses[j], positionInLine=0;
 
             Course tempCourse = findCourseByID(sys->m_coursesList,courseNumber );
             assert(tempCourse);
             IsraeliQueue tempQueue= IsraeliQueueClone(tempCourse->m_queue);
             assert(tempQueue);
             if (IsraeliQueueSize(tempQueue)<tempCourse->m_size){
-                courseIndex++;
                 IsraeliQueueDestroy(tempQueue);
                 continue;
             }
@@ -665,16 +664,14 @@ Student areAllHackersSatisfied( EnrollmentSystem sys){
             if(positionInLine>=tempCourse->m_size){
                 failCount++;
             }
-            IsraeliQueueDestroy(tempQueue);
-            courseIndex++;
-        } //check for fails
-        int failCap=MIN(2 , courseIndex);
 
-        if(failCount >= failCap){
-            return sys->m_hackersList[hackerIndex]->m_studentCard;
+            IsraeliQueueDestroy(tempQueue);
+        }//check for fails
+
+        if(failCount >= MIN(2 , sys->m_hackersList[i]->m_coursesNum)){
+            return sys->m_hackersList[i]->m_studentCard;
 
         }
-        hackerIndex++;
     }
 
     return NULL;
