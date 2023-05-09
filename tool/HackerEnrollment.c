@@ -121,7 +121,7 @@ EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
         destroyEnrollment(newSys);
         return NULL;//CREATE FAIL
     }
-    int maxArr=MAX(newSys->m_coursesNum,newSys->m_studentsNum);
+
     newSys->m_hackersList= createHackersListFromFile(hackers,newSys);
     if (!newSys->m_hackersList){
         destroyEnrollment(newSys);
@@ -364,6 +364,8 @@ Student createStudentFromLine(char *str, int maxWord){
     strcpy(newStudent->m_name,tempStr);
     newStudent->m_enemiesList=NULL;
     newStudent->m_friendsList=NULL;
+    newStudent->m_enemiesNum=0;
+    newStudent->m_friendsNum=0;
     free(tempStr);
     return newStudent;
 }
@@ -431,10 +433,10 @@ Course *createCourseListFromFile(FILE* courses, int *length, FriendshipFunction 
  */
 Hacker *createHackersListFromFile(FILE* hackers, EnrollmentSystem newSys){
     assert(hackers&&newSys);
-    unsigned long maxLineLen= getMaxLineInFile(hackers)+1;
+
     newSys->m_hackersNum=getLineNumInFile(hackers)/4;
 
-    Hacker *hackerList=malloc(sizeof(Hacker)*(newSys->m_hackersNum+1));
+    Hacker *hackerList=malloc(sizeof(Hacker)*(newSys->m_hackersNum));
     if(!hackerList){
         return NULL;//MALLOC FAIL
     }
@@ -666,7 +668,7 @@ Student areAllHackersSatisfied( EnrollmentSystem sys){
             IsraeliQueueDestroy(tempQueue);
         }//check for fails
 
-        if(failCount >= MIN(2 , sys->m_hackersList[i]->m_coursesNum)){
+        if(failCount!=0&&failCount >= MIN(2 , sys->m_hackersList[i]->m_coursesNum)){
             return sys->m_hackersList[i]->m_studentCard;
 
         }
@@ -689,16 +691,16 @@ int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB){
     const Student studentB=(Student)ptrStudentB;
     int i=0;
     if(studentA->m_friendsList){
-        while(studentA->m_friendsList[i]){
-            if (studentA->m_friendsList[i++]==(studentB->m_studentID)){
+        for(;i<studentA->m_friendsNum;i++){
+            if (studentA->m_friendsList[i]==(studentB->m_studentID)){
                 return FRIENDSHIP_THR;
             }
         }
     }
     i=0;
     if(studentA->m_friendsList){
-        while(studentA->m_enemiesList[i]!=0){
-            if (studentA->m_enemiesList[i++]==(studentB->m_studentID)){
+        for(;i<studentA->m_enemiesNum;i++){
+            if (studentA->m_enemiesList[i]==(studentB->m_studentID)){
                 return RIVALRY_THR;
             }
         }
@@ -706,16 +708,16 @@ int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB){
     i=0;
     //checks for both students
     if(studentB->m_friendsList){
-        while(studentB->m_friendsList[i]){
-            if (studentB->m_friendsList[i++]==(studentA->m_studentID)){
+        for(;i<studentB->m_friendsNum;i++){
+            if (studentB->m_friendsList[i]==(studentA->m_studentID)){
                 return 20;
             }
         }
     }
     i=0;
     if(studentB->m_friendsList){
-        while(studentB->m_enemiesList[i]!=0){
-            if (studentB->m_enemiesList[i++]==(studentA->m_studentID)){
+        for(;i<studentB->m_enemiesNum;i++){
+            if (studentB->m_enemiesList[i]==(studentA->m_studentID)){
                 return -20;
             }
         }
