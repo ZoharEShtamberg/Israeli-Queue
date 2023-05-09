@@ -218,7 +218,7 @@ void destroyStudentList(Student *List,int length){
     if(!List){
         return;
     }
-    for(int i=0;i<length;i++){
+    for(int i=0;i<=length;i++){
         if(List[i]){
             free(List[i]->m_name);
             free(List[i]->m_enemiesList);
@@ -233,12 +233,12 @@ void destroyCoursesList(Course *List,int length){
     if(!List){
         return;
     }
-    for(int i=0;i<length;i++){
+    for(int i=0;i<=length;i++){
         if(List[i]){
             if(List[i]->m_queue) {
                 IsraeliQueueDestroy(List[i]->m_queue);
-                free(List[i]);
             }
+            free(List[i]);
         }
     }
     free(List);
@@ -248,7 +248,7 @@ void destroyHackersList(Hacker *List,int length){
     if(!List){
         return;
     }
-    for(int i=0;i<length;i++){
+    for(int i=0;i<=length;i++){
         if(List[i]){
             free(List[i]->m_preferredCourses);
             free(List[i]);
