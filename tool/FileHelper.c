@@ -90,6 +90,7 @@ int getLineNumInFile(FILE* file){
 
 /**creates new dynamically allocated array of int based on a string of numbers
  *str- string of numbers divided by " "
+ * assumes line has at least one word
  */
 int *createIntArrayFromStr(char* str){
     assert(str[0]);
@@ -104,9 +105,11 @@ int *createIntArrayFromStr(char* str){
     if (!newArr){
         return NULL;
     }
+    char *token= strtok(str, " ");
 
     for (int i = 0; i < size; i++) {
-        newArr[i]=atoi(strtok(str," "));
+        newArr[i]=atoi(token);
+        token= strtok(NULL, " ");
     }
     newArr[size]=0;
 
