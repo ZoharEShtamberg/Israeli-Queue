@@ -100,7 +100,7 @@ int *createIntArrayFromStr(char* str){
         }
         strIndex++;
     }
-    int *newArr= (int*)malloc(sizeof (int)*(size));
+    int *newArr= (int*)malloc(sizeof (int)*(size+1));
     if (!newArr){
         return NULL;
     }
@@ -108,6 +108,8 @@ int *createIntArrayFromStr(char* str){
     for (int i = 0; i < size; i++) {
         newArr[i]=atoi(strtok(str," "));
     }
+    newArr[size]=0;
+
 
     return newArr;
 }

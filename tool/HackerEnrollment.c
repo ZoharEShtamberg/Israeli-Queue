@@ -429,7 +429,7 @@ Hacker *createHackersListFromFile(FILE* hackers, int *length, const Student *stu
     assert(hackers&&studentList&&(maxArrayNum>0));
     unsigned long maxLineLen= getMaxLineInFile(hackers)+1;
     *length=getLineNumInFile(hackers)/4;
-    Hacker *hackerList=(Hacker*) malloc(sizeof(Hacker)*(*length));
+    Hacker *hackerList=malloc(sizeof(Hacker)*(*length+1));
     if(!hackerList){
         return NULL;//MALLOC FAIL
     }
@@ -442,6 +442,7 @@ Hacker *createHackersListFromFile(FILE* hackers, int *length, const Student *stu
             return NULL;
         }
     }
+    hackerList[*length]=NULL;
     return hackerList;
 }
 
@@ -454,7 +455,7 @@ Hacker createHacker(FILE *hackers, const unsigned long *maxLineLen,const Student
     if(!hackers){
         return NULL;//BAD PARM
     }
-    char *tempStr=malloc(sizeof(char)*(*maxLineLen+1));
+    char *tempStr=malloc(sizeof(char)* ((*maxLineLen)+1) );
     if (!tempStr){
         return NULL;//MALLOC FAIL
     }
@@ -567,6 +568,7 @@ void printQueuesToFile(EnrollmentSystem sys, FILE* outFile){
             tempStudent= IsraeliQueueDequeue(tempQueue);
         }
         fprintf(outFile, "\n");
+        IsraeliQueueDestroy(tempQueue);
     }
 }
 
