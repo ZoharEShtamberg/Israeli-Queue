@@ -60,7 +60,7 @@ Student *createStudentListFromFile(FILE* students, int *length);
 Student createStudentFromLine(char* str,int maxWord);
 Course *createCourseListFromFile(FILE* courses, int *length,FriendshipFunction *functionArray);
 Hacker *createHackersListFromFile(FILE* hackers, EnrollmentSystem newSys);
-Hacker createHacker(FILE *hackers, EnrollmentSystem sys);
+Hacker createHacker(FILE *hackers, EnrollmentSystem sys, int maxSize);
 
 void destroyStudentList(Student *List,int length);
 void destroyCoursesList(Course *List,int length);
@@ -172,6 +172,7 @@ void hackEnrollment(EnrollmentSystem sys, FILE* out){
     }
     Student firstHackerUnsatisfied= areAllHackersSatisfied(sys);
     if(firstHackerUnsatisfied){
+        printQueuesToFile(sys, out);
         fprintf(out, "Cannot satisfy constraints for %*d\n",ID_LENGTH,firstHackerUnsatisfied->m_studentID);
         return;
     }
@@ -442,8 +443,9 @@ Hacker *createHackersListFromFile(FILE* hackers, EnrollmentSystem newSys){
     }
 
 
+    int bufferSize=getMaxLineInFile(hackers);
     for (int i=0;i<(newSys->m_hackersNum);i++){
-        hackerList[i]= createHacker(hackers,newSys);
+        hackerList[i]= createHacker(hackers,newSys,bufferSize);
         if(!hackerList[i]){
             destroyHackersList(hackerList,i);
             return NULL;
@@ -457,16 +459,17 @@ Hacker *createHackersListFromFile(FILE* hackers, EnrollmentSystem newSys){
  *in case of failure returns null
  * doesnt destroy memory allocations that belong to new sys upon failure-destroy function responsibility
  */
-Hacker createHacker(FILE *hackers, EnrollmentSystem sys){
+Hacker createHacker(FILE *hackers, EnrollmentSystem sys, int maxSize){
     if(!hackers||!sys){
         return NULL;//BAD PARM
     }
-    int befferSize= getMaxLineInFile(hackers);
-    char *tempStr=malloc(sizeof(char)* ((befferSize)+1) );
+
+    char *tempStr=malloc(sizeof(char)* (maxSize+1) );
     if (!tempStr){
         return NULL;//MALLOC FAIL
     }
-    Hacker newHacker=(Hacker)malloc(sizeof (*newHacker));
+    Hacker newHacker=malloc(sizeof (*newHacker));
+
     if(!newHacker){
         free(tempStr);
         return NULL;//MALLOC FAIL;
@@ -605,10 +608,10 @@ void updateFriendshipFunctions(EnrollmentSystem sys) {
 bool insertHackersToQueues(EnrollmentSystem sys){
     assert(sys);
     for (int i=0; i<sys->m_hackersNum;i++) {
-        if(!sys->m_hackersList[i]->m_preferredCourses){
+        if(sys->m_hackersList[i]->m_preferredCourses==0){
             continue;
         }
-        for (int j = 0; j < sys->m_hackersList[i]->m_coursesNum; ++j) {
+        for (int j = 0; j < sys->m_hackersList[i]->m_coursesNum; j++) {
             Course tempCourse = findCourseByID(sys->m_coursesList, sys->m_hackersList[i]->m_preferredCourses[j],sys->m_coursesNum);
             assert(tempCourse);
             if (IsraeliQueueEnqueue(tempCourse->m_queue,sys->m_hackersList[i]->m_studentCard)!=ISRAELIQUEUE_SUCCESS) {
@@ -631,7 +634,7 @@ Student areAllHackersSatisfied( EnrollmentSystem sys){
     //hacker loop:
     for(int i=0;i<sys->m_hackersNum;i++){
 
-        if(!sys->m_hackersList[i]->m_preferredCourses){
+        if(sys->m_hackersList[i]->m_preferredCourses==0){
             continue;
         }
 
@@ -668,12 +671,11 @@ Student areAllHackersSatisfied( EnrollmentSystem sys){
             IsraeliQueueDestroy(tempQueue);
         }//check for fails
 
-        if(failCount!=0&&failCount >= MIN(2 , sys->m_hackersList[i]->m_coursesNum)){
+        if(sys->m_hackersList[i]->m_coursesNum-failCount < MIN(2 , sys->m_hackersList[i]->m_coursesNum)){
             return sys->m_hackersList[i]->m_studentCard;
 
         }
     }
-
     return NULL;
 }
 
