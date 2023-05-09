@@ -91,7 +91,7 @@ static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue){
 	int sum = 0, counter=0,current;
 	double average;
 	FriendshipFunction *list = queue->m_friendshipFunctionList;
-	while(list){
+	while(*list){
 		current = (*list)(itemA, itemB);
 		if(current > queue->m_friendshipThreshold){
 			return false;

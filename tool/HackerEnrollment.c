@@ -555,18 +555,24 @@ void printQueuesToFile(EnrollmentSystem sys, FILE* outFile){
     if(!sys||!outFile){
         return;
     }
+
     for (int i = 0; i < sys->m_coursesNum; i++) {
         IsraeliQueue tempQueue= IsraeliQueueClone(sys->m_coursesList[i]->m_queue);
+
         assert(tempQueue);
+
         if(IsraeliQueueSize(tempQueue)==0){
             continue;
         }
         fprintf(outFile,"%d", sys->m_coursesList[i]->m_number);
+
         Student tempStudent= IsraeliQueueDequeue(tempQueue);
+
         while(tempStudent){
             fprintf(outFile, " %*d",ID_LENGTH, tempStudent->m_studentID);
             tempStudent= IsraeliQueueDequeue(tempQueue);
         }
+
         fprintf(outFile, "\n");
         IsraeliQueueDestroy(tempQueue);
     }
@@ -623,6 +629,7 @@ Student areAllHackersSatisfied( EnrollmentSystem sys){
     while(sys->m_hackersList[hackerIndex]){
 
         if(!sys->m_hackersList[hackerIndex]->m_preferredCourses){
+            hackerIndex++;
             continue;
         }
         int failCount=0,courseIndex=0;
