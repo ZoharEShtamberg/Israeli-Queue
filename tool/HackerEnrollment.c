@@ -237,6 +237,7 @@ void destroyCoursesList(Course *List,int length){
         if(List[i]){
             if(List[i]->m_queue) {
                 IsraeliQueueDestroy(List[i]->m_queue);
+                free(List[i]);
             }
         }
     }
@@ -562,6 +563,7 @@ void printQueuesToFile(EnrollmentSystem sys, FILE* outFile){
         assert(tempQueue);
 
         if(IsraeliQueueSize(tempQueue)==0){
+            IsraeliQueueDestroy(tempQueue);
             continue;
         }
         fprintf(outFile,"%d", sys->m_coursesList[i]->m_number);
