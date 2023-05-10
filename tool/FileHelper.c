@@ -93,10 +93,14 @@ int getLineNumInFile(FILE* file){
  * assumes line has at least one word
  */
 int *createIntArrayFromStr(char* str, int* length){
-    assert(str[0]);
+    assert(str);
+    if(str[0]=='\n'||str[0]=='\r'||str[0]=='\0'){
+        return 0;
+    }
     int size= 1,strIndex=0;
     while(str[strIndex]&&str[strIndex]!='\0'){
         if(str[strIndex]==' '){
+            if(str[strIndex+1]&& str[strIndex+1]>='1' &&str[strIndex+1]<='9')
             size++;
         }
         strIndex++;
