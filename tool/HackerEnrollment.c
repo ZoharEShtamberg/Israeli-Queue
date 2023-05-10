@@ -5,7 +5,7 @@
 #include "FileHelper.h"
 #include "HackerEnrollment.h"
 #include "IsraeliQueue.h"
-//TODO not suppose to be
+
 
 
 #define ID_INDEX 0
@@ -376,7 +376,7 @@ Student createStudentFromLine(char *str, int maxWord){
  * @param functionArray
  * @return pointer to course list
  * *  in case of failure returns NULL
- *  * doesnt destroy memory allocations that belong to new sys upon failure-destroy function responsibility
+ *  *destroys memory allocations that belong to new sys upon failure using destroy function
  */
 Course *createCourseListFromFile(FILE* courses, int *length, FriendshipFunction *functionArray){
     assert(courses);
@@ -692,7 +692,7 @@ int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB){
     assert(ptrStudentA&&ptrStudentB);
     const Student studentA=(Student)ptrStudentA;
     const Student studentB=(Student)ptrStudentB;
-    int i=0;
+    int i=0;//TODO SWITCH TO FUNCTION
     if(studentA->m_friendsList){
         for(;i<studentA->m_friendsNum;i++){
             if (studentA->m_friendsList[i]==(studentB->m_studentID)){
@@ -701,7 +701,7 @@ int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB){
         }
     }
     i=0;
-    if(studentA->m_friendsList){
+    if(studentA->m_enemiesList){
         for(;i<studentA->m_enemiesNum;i++){
             if (studentA->m_enemiesList[i]==(studentB->m_studentID)){
                 return RIVALRY_THR;
@@ -718,7 +718,7 @@ int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB){
         }
     }
     i=0;
-    if(studentB->m_friendsList){
+    if(studentB->m_enemiesList){
         for(;i<studentB->m_enemiesNum;i++){
             if (studentB->m_enemiesList[i]==(studentA->m_studentID)){
                 return -20;
