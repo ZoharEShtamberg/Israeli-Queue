@@ -5,7 +5,6 @@
 #include "FileHelper.h"
 #include "HackEnrollment.h"
 #include "IsraeliQueue.h"
-//TODO not suppose to be
 
 
 #define ID_INDEX 0
@@ -406,8 +405,7 @@ Course *createCourseListFromFile(FILE* courses, int *length, FriendshipFunction 
             return NULL;//MALLOC FAIL
         }
 
-        int check=sscanf(tempStr,"%d %d",&courseList[i]->m_number, &courseList[i]->m_size);
-        assert(check==2);//if fail wrong format or question parameters
+        sscanf(tempStr,"%d %d",&courseList[i]->m_number, &courseList[i]->m_size);
         courseList[i]->m_queue= IsraeliQueueCreate(functionArray,isTheSameStudent,FRIENDSHIP_THR,RIVALRY_THR);
         if (!courseList[i]->m_queue){
             destroyCoursesList(courseList,i);
