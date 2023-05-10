@@ -16,8 +16,6 @@
 #define FRIENDSHIP_THR 20
 #define AMOUNT_OF_FF 3
 
-#define MIN(A, B) ((A)<=(B)) ? (A) : (B)
-#define MAX(A, B) ((A)>=(B)) ? (A) : (B)
 
 
 //=================================================================
