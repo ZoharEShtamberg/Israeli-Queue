@@ -668,6 +668,9 @@ Student areAllHackersSatisfied( EnrollmentSystem sys){
 
             IsraeliQueueDestroy(tempQueue);
         }//check for fails
+        if (failCount==0){
+            continue;
+        }
 
         if((sys->m_hackersList[i]->m_coursesNum)-failCount < 2||(failCount==sys->m_hackersList[i]->m_coursesNum)){
             return sys->m_hackersList[i]->m_studentCard;
