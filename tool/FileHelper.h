@@ -12,7 +12,7 @@
 int getMaxLineInFile(FILE* file);
 int getMaxWordInFile(FILE* file);
 int getLineNumInFile(FILE* file);
-int *createIntArrayFromStr(char *str);
+int *createIntArrayFromStr(char *str, int* length);
 int putLineFromFileInString(char* str, FILE* file);
 int getNextWordLength(const char* srcStr);
 

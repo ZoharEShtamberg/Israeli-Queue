@@ -92,16 +92,21 @@ int getLineNumInFile(FILE* file){
  *str- string of numbers divided by " "
  * assumes line has at least one word
  */
-int *createIntArrayFromStr(char* str){
-    assert(str[0]);
+int *createIntArrayFromStr(char* str, int* length){
+    assert(str);
+    if(str[0]=='\n'||str[0]=='\r'||str[0]=='\0'){
+        return 0;
+    }
     int size= 1,strIndex=0;
-    while(str[strIndex]&&str[strIndex]!='\n'){
+    while(str[strIndex]&&str[strIndex]!='\0'){
         if(str[strIndex]==' '){
+            if(str[strIndex+1]&& str[strIndex+1]>='1' &&str[strIndex+1]<='9')
             size++;
         }
         strIndex++;
     }
-    int *newArr= (int*)malloc(sizeof (int)*(size+1));
+    *length=size;
+    int *newArr= (int*)malloc(sizeof (int)*(size));
     if (!newArr){
         return NULL;
     }
@@ -111,7 +116,7 @@ int *createIntArrayFromStr(char* str){
         newArr[i]=atoi(token);
         token= strtok(NULL, " ");
     }
-    newArr[size]=0;
+
 
 
     return newArr;
@@ -122,16 +127,22 @@ int *createIntArrayFromStr(char* str){
 // * puts next line in file into provided string. in case of error returns false
 // * returns amount of chars copied
 //*/
-int putLineFromFileInString(char* str, FILE* file ){
-    assert(file&&str);
+int putLineFromFileInString(char* destStr, FILE* file ){
+    assert(file&&destStr);
     int i=0;
-    char temp=(char)fgetc(file);
-    while (temp&&temp!='\n'){
-        str[i++]=temp;
-        temp=(char)fgetc(file);
+    char currChar=(char)fgetc(file);
+    while (currChar&&currChar!='\n'&&currChar!='\r'){
+        destStr[i++]=currChar;
+        currChar=(char)fgetc(file);
     }
     if (i!=0){
-        str[i]='\0';
+        destStr[i]='\0';
+    }
+    if (currChar == '\r') {
+        currChar = (char)fgetc(file);
+        if (currChar != '\n') {
+            fseek(file, -1, SEEK_CUR);  //Rewind if not  newline
+        }
     }
     return i;
 }
