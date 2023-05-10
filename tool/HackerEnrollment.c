@@ -4,7 +4,7 @@
 #include <string.h>
 #include "FileHelper.h"
 #include "HackerEnrollment.h"
-#include "../IsraeliQueue.h"
+#include "IsraeliQueue.h"
 //TODO not suppose to be
 
 
@@ -645,7 +645,7 @@ Student areAllHackersSatisfied( EnrollmentSystem sys){
 
             Course tempCourse = findCourseByID(sys->m_coursesList,courseNumber,sys->m_coursesNum );
             assert(tempCourse);
-            IsraeliQueue tempQueue= IsraeliQueueClone(tempCourse->m_queue);
+            IsraeliQueue tempQueue = IsraeliQueueClone(tempCourse->m_queue);
             assert(tempQueue);
             if (IsraeliQueueSize(tempQueue)<tempCourse->m_size){
                 IsraeliQueueDestroy(tempQueue);
@@ -662,7 +662,7 @@ Student areAllHackersSatisfied( EnrollmentSystem sys){
             }
             assert(positionInLine>0);
 
-            if(positionInLine>=tempCourse->m_size){
+            if(positionInLine>tempCourse->m_size){  //changed '>=' to '>'. zohar
                 failCount++;
             }
 
