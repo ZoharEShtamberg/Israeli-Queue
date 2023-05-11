@@ -43,6 +43,7 @@ static bool areFriends(void* itemA, void* itemB,IsraeliQueue queue);
 static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue);
 static IsraeliItem findFriend(IsraeliQueue queue, void* item);
 static void insertBehind(IsraeliItem behind, IsraeliItem front);
+static IsraeliItem* listQueue(IsraeliItem head, int size);
 //=================================================================
 /*internal functions:*/
 //=================================================================
@@ -170,31 +171,29 @@ static void copyIsraeliItem(IsraeliItem source, IsraeliItem target){
 	target->m_enemiesBlocked=source->m_enemiesBlocked;
 }
 /**@param source: head of linked israeli items.
+ * @param size: #of items in list
  * @return: head to a new israeli item list. NULL for error.
- * calls it self recursively, allocating for each item.
- * @note: should not receive NULL!
  * */
-static IsraeliItem duplicateItemList(IsraeliItem source){
-	assert(source);
-	if(source->m_next==NULL){	//means it's the last one
-		IsraeliItem last = malloc(sizeof(*last));
-		if(!last){
-			return NULL;
+static IsraeliItem duplicateItemList(IsraeliItem source, int size){
+	if(!source){
+		return NULL;
+	}
+	IsraeliItem *list = listQueue(source, size);
+	if(!list){
+		return NULL;
+	}
+	IsraeliItem previous = NULL, current = NULL;
+	for(int i = size-1 ; i>=0 ; i--){
+		current = malloc(sizeof(*current)); 	//size of the struct
+		if(!current){
+			destroyIsraeliList(previous);
+			return NULL;// malloc failed
 		}
-		last->m_next = NULL;
-		copyIsraeliItem(source, last);
-		return last;
+		current->m_next=previous;
+		previous=current;
+		copyIsraeliItem(list[i], current);
 	}
-	IsraeliItem current = malloc(sizeof(*current));
-	if(!current){
-		return NULL;
-	}
-	current->m_next = duplicateItemList(source->m_next);
-	if(current->m_next == NULL){ //alloc failed down the line
-		free(current);
-		return NULL;
-	}
-	copyIsraeliItem(source, current);
+	free(list);
 	return current;
 }
 
@@ -209,6 +208,25 @@ static IsraeliQueueError addFriendshipFunctionsFromList(IsraeliQueue *queueList,
 		}
 	}
 	return ISRAELIQUEUE_SUCCESS;
+}
+/**@param head: Israeli item list head
+ * @param size: # of items in q
+ * returns a list of ptrs to the israeli items, returns allocated memory
+*/
+static IsraeliItem* listQueue(IsraeliItem head, int size){
+	if(!head || size<=0){
+		return NULL;
+	}
+	IsraeliItem *list = malloc(size*sizeof(IsraeliItem)); //note: sizeof the ptr itself.
+	if(!list){
+		return NULL;
+	}
+	for(int i=0;i<size;i++){
+		assert(head);
+		list[i]=head;
+		head=head->m_next;
+	}
+	return list;
 }
 
 //=================================================================
@@ -389,7 +407,8 @@ IsraeliQueue IsraeliQueueClone(IsraeliQueue q){
 	if(q->m_head==NULL){
 		return clone;	//'copyitemlist' must not receive NULL!
 	}
-	IsraeliItem newHead = duplicateItemList(q->m_head);
+	int size = IsraeliQueueSize(q);
+	IsraeliItem newHead = duplicateItemList(q->m_head, size);
 	if(!newHead){	//alloc error in copy item list
 		IsraeliQueueDestroy(clone);
 		return NULL;
@@ -407,27 +426,21 @@ IsraeliQueueError IsraeliQueueImprovePositions(IsraeliQueue queue){
 		return ISRAELIQUEUE_BAD_PARAM;
 	}
 	int size = IsraeliQueueSize(queue);
-	if(size<2){
+	if(size<1){
 		return ISRAELIQUEUE_SUCCESS;
 	}
-	IsraeliItem *list = malloc(size*sizeof(IsraeliItem)); //note: sizeof the ptr itself.
+	IsraeliItem *list = listQueue(queue->m_head, size);
 	if(!list){
 		return ISRAELIQUEUE_ALLOC_FAILED;
 	}
-	IsraeliItem head=queue->m_head;
-	for(int i=0;i<size;i++){
-		assert(head);
-		list[i]=head;
-		head=head->m_next;
-	}
-	for(int i=size;i>1;i--){	//not including the first one
-		list[i-1]->m_next = list[i]->m_next;
+	for(int i=size-1;i>0;i--){	//not including the first one
+		list[i-1]->m_next = list[i]->m_next; 	
 		IsraeliItem friend = findFriend(queue, list[i]->m_data);
-		insertBehind(friend, list[i]);
+		insertBehind(list[i], friend);
 	}
 	queue->m_head = list[0]->m_next;	//after trying to improve the 1st item in line, the one after it is the new head
 	IsraeliItem friend = findFriend(queue, list[0]->m_data);
-	insertBehind(friend, list[0]);
+	insertBehind(list[0], friend);
 	free(list);
 	return ISRAELIQUEUE_SUCCESS;
 }
@@ -441,7 +454,7 @@ IsraeliQueue IsraeliQueueMerge(IsraeliQueue* queueList , ComparisonFunction comp
 	unsigned int queuesNum=0, maxSize=0;
 	double rivalryMultiply=1, friendSum=0;
 
-	for(  ;queueList[queuesNum];queuesNum++) {
+	for(  ;queueList[queuesNum];queuesNum++) { 
 		rivalryMultiply *= queueList[queuesNum]->m_rivalryThreshold;
 		friendSum += queueList[queuesNum]->m_friendshipThreshold;
 		int currSize = IsraeliQueueSize(queueList[queuesNum]);
@@ -450,7 +463,7 @@ IsraeliQueue IsraeliQueueMerge(IsraeliQueue* queueList , ComparisonFunction comp
 		}
 	}
 	assert(queuesNum);	//already checked but i wanna be sure
-	int rivalryThreshold = ceil(pow(ABS(rivalryMultiply), 1/queuesNum));
+	int rivalryThreshold = ceil(pow(ABS(rivalryMultiply), (double)1/queuesNum));
 	int friendshipThreshold = ceil(friendSum/queuesNum);
 
 	FriendshipFunction arr[1] = {NULL};	//we need to give em something
