@@ -78,7 +78,7 @@ int getLineNumInFile(FILE* file){
     }
     int lineCounter=0;
     char tempC;
-    while ((tempC=(char)fgetc(file))!=EOF){
+    while ((tempC=fgetc(file))!=EOF){
         if(tempC=='\n') {
             lineCounter++;
         }
@@ -131,7 +131,7 @@ int putLineFromFileInString(char* destStr, FILE* file ){
     assert(file&&destStr);
     int i=0;
     char currChar=(char)fgetc(file);
-    while (currChar&&currChar!='\n'&&currChar!='\r'){
+    while (currChar!=EOF&&currChar!='\n'&&currChar!='\r'){
         destStr[i++]=currChar;
         currChar=(char)fgetc(file);
     }
@@ -157,7 +157,7 @@ int getNextWordLength(const char* srcStr){
     int i=0;
     while(srcStr[i]){
         if (srcStr[i]==' '||srcStr[i]=='\n'||srcStr[i]=='\0'){
-            return i-1;
+            return i;   //removed the '-1', it was wrong. zohar.
         }
         i++;
     }

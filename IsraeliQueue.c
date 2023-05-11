@@ -88,20 +88,20 @@ static bool areFriends(void* itemA, void* itemB,IsraeliQueue queue){
  * @return: true if they are enemies, false otherwise.
  * */
 static bool areEnemies(void* itemA, void* itemB, IsraeliQueue queue){
-	int sum = 0, counter=0,current;
+	int sum = 0, counter=0,currentLevel;
 	double average;
 	FriendshipFunction *list = queue->m_friendshipFunctionList;
 	while(*list){
-		current = (*list)(itemA, itemB);
-		if(current > queue->m_friendshipThreshold){
+		currentLevel = (*list)(itemA, itemB);
+		if(currentLevel > queue->m_friendshipThreshold){
 			return false;
 		}
-		sum +=current;
+		sum +=currentLevel;
 		counter++;
 		list++;
 		average = ((double)sum/counter);//inside the loop to avoid dividing by 0
 	}
-	if(ceil(average) >= queue->m_rivalryThreshold){//need to check if 'ceil()' is allowed
+	if(average >= queue->m_rivalryThreshold){//need to check if 'ceil()' is allowed
 		return false;
 	}
 	return true;

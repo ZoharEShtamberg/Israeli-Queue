@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "FileHelper.h"
-#include "HackerEnrollment.h"
-#include "../IsraeliQueue.h"
+#include "HackEnrollment.h"
+#include "IsraeliQueue.h"
 
 
 
@@ -12,10 +12,11 @@
 #define ID_LENGTH 9
 #define F_NAME_INDEX 3
 #define L_NAME_INDEX 4
-#define RIVALRY_THR (-20)
+#define RIVALRY_THR 0
 #define FRIENDSHIP_THR 20
 #define AMOUNT_OF_FF 3
-
+#define FRIENDSHIP 20
+#define RIVALRY (-20)
 
 
 //=================================================================
@@ -100,7 +101,7 @@ EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
         return NULL;//MALLOC FAIL
     }
 
-    newSys->m_studentsList= createStudentListFromFile(students,&newSys->m_studentsNum);
+    newSys->m_studentsList= createStudentListFromFile(students,&(newSys->m_studentsNum));
     if(!newSys->m_studentsList){
         destroyEnrollment(newSys);
         return NULL;//MALLOC FAIL
@@ -115,7 +116,7 @@ EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers){
         newSys->m_functionArray[i]=NULL;
     }
 
-    newSys->m_coursesList= createCourseListFromFile(courses,&newSys->m_coursesNum, newSys->m_functionArray);
+    newSys->m_coursesList= createCourseListFromFile(courses,&(newSys->m_coursesNum), newSys->m_functionArray);
     if(!newSys->m_coursesList){
         destroyEnrollment(newSys);
         return NULL;//CREATE FAIL
@@ -171,7 +172,6 @@ void hackEnrollment(EnrollmentSystem sys, FILE* out){
     }
     Student firstHackerUnsatisfied= areAllHackersSatisfied(sys);
     if(firstHackerUnsatisfied){
-        printQueuesToFile(sys, out);//TODO
         fprintf(out, "Cannot satisfy constraints for %*d\n",ID_LENGTH,firstHackerUnsatisfied->m_studentID);
         return;
     }
@@ -412,8 +412,7 @@ Course *createCourseListFromFile(FILE* courses, int *length, FriendshipFunction 
             return NULL;//MALLOC FAIL
         }
 
-        int check=sscanf(bufferStr,"%d %d",&courseList[i]->m_number, &courseList[i]->m_size);
-        assert(check==2);//if fail wrong format or not fitting question parameters
+        sscanf(bufferStr,"%d %d",&courseList[i]->m_number, &courseList[i]->m_size);
         courseList[i]->m_queue= IsraeliQueueCreate(functionArray,isTheSameStudent,FRIENDSHIP_THR,RIVALRY_THR);
         if (!courseList[i]->m_queue){
             destroyCoursesList(courseList,i);
@@ -536,10 +535,10 @@ Hacker createHacker(FILE *hackers, EnrollmentSystem sys, int maxSize){
 /**
  * finds relevant course and returns a pointer to it, NULL if not found in List
  */
-Course findCourseByID(Course *courseList, int ID,int size){
+Course findCourseByID(Course *courseList, int courseNum ,int size){
     assert(courseList);
     for(int i=0;i<size;i++){
-        if (courseList[i]->m_number==ID){
+        if (courseList[i]->m_number==courseNum){
             return courseList[i];
         }
     }
@@ -703,26 +702,27 @@ int friendshipByHackerFile(void* ptrStudentA, void* ptrStudentB){
     assert(ptrStudentA&&ptrStudentB);
     const Student studentA=(Student)ptrStudentA;
     const Student studentB=(Student)ptrStudentB;
+    //changed the 'define's used here. zohar.
     if(studentA->m_friendsList){
         if(isNumberInArray(studentA->m_friendsList,studentB->m_studentID,studentA->m_friendsNum)){
-            return FRIENDSHIP_THR;
+            return FRIENDSHIP;
         }
     }
     if(studentA->m_enemiesList){
         if(isNumberInArray(studentA->m_enemiesList,studentB->m_studentID,studentA->m_enemiesNum)){
-            return RIVALRY_THR;
+            return RIVALRY;
         }
     }
 
     if(studentB->m_friendsList){
         if(isNumberInArray(studentB->m_friendsList,studentA->m_studentID,studentB->m_friendsNum)){
-            return FRIENDSHIP_THR;
+            return FRIENDSHIP;
         }
     }
 
     if(studentB->m_enemiesList){
         if(isNumberInArray(studentB->m_enemiesList,studentA->m_studentID,studentB->m_enemiesNum)){
-            return RIVALRY_THR;
+            return RIVALRY;
         }
     }
     return 0;
@@ -737,12 +737,12 @@ int friendshipByASCII(void* ptrStudentA, void* ptrStudentB){
 
     int firstNameALen= getNextWordLength(studentA->m_name),
         firstNameBLen= getNextWordLength(studentB->m_name);
-
-    sum+=calculateDiffInASCII(&studentA->m_name[firstNameALen],&studentB->m_name[firstNameBLen]);
+    //added +1 here to skip over white space
+    sum+=calculateDiffInASCII(&studentA->m_name[firstNameALen+1],&studentB->m_name[firstNameBLen+1]);
     return sum;
 }
 
-//evaluates the friendship of two Student Types based on ascii differences in names
+//evaluates the friendship of two Student Types based on ID difference
 int friendshipByIDDiff(void* ptrStudentA, void* ptrStudentB){
     assert(ptrStudentA&&ptrStudentB);
     Student studentA=(Student)ptrStudentA, studentB=(Student)ptrStudentB;
